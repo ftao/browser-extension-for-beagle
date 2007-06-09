@@ -1,0 +1,24 @@
+<!ENTITY beagle.context.menu.label                  "Beagle">
+<!ENTITY beagle.context.prefs.label                 "Beagle Preferences">
+<!ENTITY beagle.context.search.link.label           "Find References to this Link">
+<!ENTITY beagle.context.search.page.label           "Find References to this Page">
+
+<!ENTITY beagle.pref.label                          "Beagle Preferences">
+<!ENTITY beagle.pref.context.label                  "Context Menu Options">
+<!ENTITY beagle.pref.context.active.label           "Add Beagle options to context menu">
+<!ENTITY beagle.pref.security.active.label          "Index pages with secure content">
+<!ENTITY beagle.pref.default.action.label           "Default Action">
+<!ENTITY beagle.pref.conflict.action.label          "Conflict Action">
+<!ENTITY beagle.pref.action.index.label             "Index">
+<!ENTITY beagle.pref.action.noindex.label           "No Index">
+<!ENTITY beagle.pref.groupbox.general.label         "General">
+<!ENTITY beagle.pref.groupbox.include.label         "Include">
+<!ENTITY beagle.pref.groupbox.exclude.label         "Exclude">
+<!ENTITY beagle.pref.filter.name.label              "Name">
+<!ENTITY beagle.pref.filter.pattern.label           "Pattern">
+<!ENTITY beagle.pref.filter.patterntype.label       "PatternType">
+<!ENTITY beagle.pref.filter.add				        "Add">
+<!ENTITY beagle.pref.filter.edit                    "Edit">
+<!ENTITY beagle.pref.filter.remove                  "Remove">
+<!ENTITY beagle.pref.export                         "Export">
+<!ENTITY beagle.pref.import                         "Import">
