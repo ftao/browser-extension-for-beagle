@@ -1,0 +1,139 @@
+<?xml version="1.0"?>
+
+<!DOCTYPE overlay SYSTEM "chrome://newbeagle/locale/beagle.dtd">
+
+<?xml-stylesheet href="chrome://global/skin/global.css" type="text/css"?>
+
+<dialog id="beagle-pref"
+  buttons="accept,cancel"
+  ondialogaccept="beaglePref.onSave();"
+  onload="beaglePref.init();" 
+  persist="screenX screenY"
+  title="&beagle.pref.label;"
+  flex="1"
+  style="min-width:500px"
+  xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul">
+
+<!-- jslib sources used for executing beagle -->
+<script type="application/x-javascript" src="jslib/jslib.js"/>
+<script type="application/x-javascript" src="jslib/io/file.js"/>
+<script type="application/x-javascript" src="jslib/io/fileUtils.js"/>
+
+  <script type="application/x-javascript" 
+      src="utils.js" />
+
+  <script type="application/x-javascript" 
+      src="json.js" />
+  
+  <script type="application/x-javascript" 
+      src="beaglePrefs.js" />
+  
+  <dialogheader title="&beagle.pref.label;"/>
+
+  <groupbox>
+    <caption label="&beagle.pref.groupbox.general.label;" />
+    <checkbox 
+      id="beagle.context.active" 
+      label="&beagle.pref.context.active.label;"
+      prefattribute="checked" 
+      preftype="bool" 
+      type="checkbox" 
+    />
+
+    <checkbox 
+      id="beagle.security.active" 
+      label="&beagle.pref.security.active.label;"
+      prefattribute="checked" 
+      preftype="bool" 
+      type="checkbox" 
+      />
+    <hbox>
+        <label>&beagle.pref.default.action.label;:</label>
+        <radiogroup id="beagle.default.action" orient="horizontal">
+            <radio id="beagle.default.action.noindex" value="0" label="&beagle.pref.action.noindex.label;" />
+            <radio id="beagle.default.action.index" value="1" label="&beagle.pref.action.index.label;"/>
+        </radiogroup>
+    </hbox>
+    <hbox>
+        <label>&beagle.pref.conflict.action.label;:</label>
+        <radiogroup id="beagle.conflict.action" orient="horizontal">
+            <radio id="beagle.conflict.action.noindex" value="0" label="&beagle.pref.action.noindex.label;" />
+            <radio id="beagle.conflict.action.index" value="1" label="&beagle.pref.action.index.label;"/>
+        </radiogroup>
+    </hbox>
+   
+  </groupbox>
+
+<!--The Patterns to Include-->		  
+<groupbox >
+	<caption label="&beagle.pref.groupbox.include.label;"/>
+    <hbox>
+	<vbox flex="1">
+    <listbox flex="1" rows="4" id="beagle.include.list">
+    <listhead>
+        <listheader id="includeName" label="Name" />
+        <listheader id="includePattern" label="Pattern" />
+        <listheader id="includePatternType" label="Type" />
+    </listhead>
+    <listcols>
+        <listcol />
+        <listcol flex="2"/>
+        <listcol flex="1"/>
+    </listcols>
+    </listbox>
+    </vbox>
+	<vbox>
+	<button command="AddIncludeFilterCmd" />
+	<button command="RemoveIncludeFilterCmd"  />
+	</vbox>
+	</hbox>
+</groupbox>
+
+
+<!--The Patterns to Exclude-->		  
+<groupbox >
+	<caption label="&beagle.pref.groupbox.exclude.label;"/>	
+	<hbox>
+	<vbox flex="1">
+    <listbox flex="1" rows="4" id="beagle.exclude.list">
+    <listhead>
+        <listheader id="excludeName" label="Name" />
+        <listheader id="excludePattern" label="Pattern" />
+        <listheader id="excludePatternType" label="Type" />
+    </listhead>
+    <listcols>
+        <listcol />
+        <listcol flex="2"/>
+        <listcol flex="1"/>
+    </listcols>
+    </listbox>
+	</vbox>
+	<vbox>
+	<button command="AddExcludeFilterCmd" />
+	<button command="RemoveExcludeFilterCmd"  />
+	</vbox>
+	</hbox>
+</groupbox>
+
+<hbox>
+<button command="ExportCmd"/>
+<button command="ImportCmd"/>
+</hbox>
+
+<command id="AddIncludeFilterCmd" label="&beagle.pref.filter.add;" oncommand="beaglePref.onAddFilter('include')"/>
+<command id="AddExcludeFilterCmd" label="&beagle.pref.filter.add;" oncommand="beaglePref.onAddFilter('exclude')"/>
+<command id="RemoveIncludeFilterCmd" label="&beagle.pref.filter.remove;" oncommand="beaglePref.onRemoveFilter('include')"/>
+<command id="RemoveExcludeFilterCmd" label="&beagle.pref.filter.remove;" oncommand="beaglePref.onRemoveFilter('exclude')"/>
+<command id="ExportCmd" label="&beagle.pref.export;" oncommand="beaglePref.onExport()"/>
+<command id="ImportCmd" label="&beagle.pref.import;" oncommand="beaglePref.onImport()"/>
+
+<preferences>
+	<preference name="beagle.pref.include.list" type="string"/>
+	<preference name="beagle.pref.exclude.list" type="string"/>
+	<preference name="beagle.pref.security.active" type="bool"/>
+</preferences>
+
+</dialog> 
+
+
+
