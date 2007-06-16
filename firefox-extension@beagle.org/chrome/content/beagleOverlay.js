@@ -6,6 +6,13 @@
 
 var beagle = {};
 
+//some constant 
+beagle.RUN_BEAGLE_NOT_FOUND = -1;
+beagle.RUN_INITED = 0;
+beagle.RUN_ENABLED = 1;
+beagle.RUN_DISABLED = 2;
+beagle.RUN_ERROR = 3;
+
 
 beagle.pref = beaglePref;
 
@@ -14,8 +21,6 @@ var gEnv = Components.classes["@mozilla.org/process/environment;1"].getService(C
 // Load jslib parts used in file execution
 var gFile = new FileUtils();
 
-beagle.runStatus = 0;
-beagle.dataPath = gEnv.get("HOME") + "/.beagle/ToIndex";
 
 /*
  * init beagle, init status, init pathes .....
@@ -24,9 +29,46 @@ beagle.dataPath = gEnv.get("HOME") + "/.beagle/ToIndex";
  */
 beagle.init = function()
 {
-    this.runStatus = 0;
-    this.dataPath = gEnv.get("HOME") + "/.beagle/ToIndex";    
+    if(!this.checkEnv())
+    {
+        this.runStatus = this.RUN_BEAGLE_NOT_FOUND;
+        this.error(_("beagle_not_found"));
+        return ;
+    }
+    else
+    {
+        if(this.pref.load()['beagle.enable'])
+        {
+            this.enable();
+        }
+        else
+        {
+            this.disable();
+        }
+        this.dataPath = gEnv.get("HOME") + "/.beagle/ToIndex";  
+        if(!gFile.exists(this.dataPath))
+            ;// do something here ? is it safe to create the dir ?
+        this.addEventListener();
+    }
 }
+
+beagle.addEventListener = function (){
+   // Add listener for page loads
+  if (document.getElementById("appcontent"))
+    document.getElementById("appcontent").addEventListener("load", 
+                                                           beaglePageLoad, 
+                                                           true);
+}
+
+beagle.checkEnv = function()
+{
+    if (!gFile.exists (gEnv.get("HOME") + "/.beagle")) {
+        alert("Not Found ~/.beagle folder. This extension will not work");
+        return false;
+    }
+    return true;
+}
+
 
 /*
  * check weather the url should index
@@ -35,9 +77,12 @@ beagle.init = function()
 beagle.shouldIndex = function(page)
 {
     var prefObject = this.pref.load();
-    var isExclude = false;
-    var isInclude = false;
-    var excludeList =  
+    
+    //check https
+    if (page.location.protocol == "https:" && !prefObject['beagle.security.active'])
+    {
+        return false;
+    }
     var lists = ['beagle.exclude.list','beagle.include.list'];
     var flags = [false,false];
     for(var j = 0; j < 2; j++)
@@ -83,22 +128,7 @@ beagle.shouldIndex = function(page)
 
 }
 
-//var gBeagleBestPath;
 
-function beagleFindFileInPath(filename)
-{
-  var path = gEnv.get("PATH");
-  if (path) {
-    var split = path.split(':');
-    var idx = 0;
-    while (idx < split.length) {
-      var trypath = split[idx++] + '/' + filename;
-      if (gFile.exists(trypath))
-        return trypath;
-    }
-  }
-  return undefined;
-}
 
 function beagleInit()
 {
@@ -138,49 +168,50 @@ function beagleInit()
   beagleUpdateStatus ();
 }
 
-//
-// Copied from nsIWebBrowserPersist.idl
-//
+/**
+ *@see http://www.xulplanet.com/references/xpcomref/comps/c_embeddingbrowsernsWebBrowserPersist1.html
+ */
+beagle.getPersisitMask()
+{
+    if(this.PERSISIT_MASK != undefined)
+        return this.PERSISIT_MASK;
+    var comp = Components.classes["@mozilla.org/embedding/browser/nsWebBrowserPersist;1"];
+    this.PERSIST_MASK = (comp.PERSIST_FLAGS_FROM_CACHE | 
+		    comp.PERSIST_FLAGS_REPLACE_EXISTING_FILES |
+		    comp.PERSIST_FLAGS_NO_BASE_TAG_MODIFICATIONS |
+		    comp.PERSIST_FLAGS_DONT_FIXUP_LINKS |
+		    comp.PERSIST_FLAGS_DONT_CHANGE_FILENAMES |
+		    comp.PERSIST_FLAGS_CLEANUP_ON_FAILURE);
+    return this.PERSISIT_MASK;
+}
 
-// Only use cached data (could fail)
-var PERSIST_FLAGS_FROM_CACHE = 1;
-// Replace existing files on the disk
-var PERSIST_FLAGS_REPLACE_EXISTING_FILES = 32;
-// Don't modify or add base tags
-var PERSIST_FLAGS_NO_BASE_TAG_MODIFICATIONS = 64;
-// Don't make any adjustments to links
-var PERSIST_FLAGS_DONT_FIXUP_LINKS = 512;
-// Don't make any adjustments to filenames
-var PERSIST_FLAGS_DONT_CHANGE_FILENAMES = 2048;
-// Cleanup on failure
-var PERSIST_FLAGS_CLEANUP_ON_FAILURE = 8192;
+beagle.getEncodeMask()
+{
+    if(this.ENCODE_MASK != undefined)
+        return this.ENCODE_MASK;
+    var comp = Components.classes["@mozilla.org/embedding/browser/nsWebBrowserPersist;1"];
+    this.ENCODE_MASK = (comp.ENCODE_FLAGS_RAW | comp.ENCODE_FLAGS_ABSOLUTE_LINKS);
+    return this.ENOCDE_MASK;
+}
 
-var PERSIST_MASK = (PERSIST_FLAGS_FROM_CACHE | 
-		    PERSIST_FLAGS_REPLACE_EXISTING_FILES |
-		    PERSIST_FLAGS_NO_BASE_TAG_MODIFICATIONS |
-		    PERSIST_FLAGS_DONT_FIXUP_LINKS |
-		    PERSIST_FLAGS_DONT_CHANGE_FILENAMES |
-		    PERSIST_FLAGS_CLEANUP_ON_FAILURE);
-
-// Write raw source
-var ENCODE_FLAGS_RAW = 4;
-// Convert links to absolute links where possible.
-var ENCODE_FLAGS_ABSOLUTE_LINKS = 128;
-
-var ENCODE_MASK = (ENCODE_FLAGS_RAW | ENCODE_FLAGS_ABSOLUTE_LINKS);
-
-function beagleWriteContent(page, tmpfilepath)
+/**
+ write page content (NOT the HTML source, the DOM instead, it may include dym contnent created by js)
+*/
+beagle.writeContent(page, tmpfilepath)
 {
   var tmpfile = Components.classes["@mozilla.org/file/local;1"].createInstance(Components.interfaces.nsILocalFile);
   tmpfile.initWithPath(tmpfilepath);
 
   var persist = Components.classes["@mozilla.org/embedding/browser/nsWebBrowserPersist;1"].createInstance(Components.interfaces.nsIWebBrowserPersist);
-  persist.persistFlags = PERSIST_MASK;
+  persist.persistFlags = this.getPersisitMask();
 
-  persist.saveDocument(page, tmpfile, null, null, ENCODE_MASK, 0);
+  persist.saveDocument(page, tmpfile, null, null, this.getEncodeMask(), 0);
 }
 
-function beagleWriteMetadata(page, tmpfilepath)
+/**
+ write meatadata  (include URI hittype mimetype characterset etc)
+*/
+beagle.writeMetadata = function(page, tmpfilepath)
 {
   var tmpfile = Components.classes["@mozilla.org/file/local;1"].createInstance(Components.interfaces.nsILocalFile);
   tmpfile.initWithPath(tmpfilepath);
@@ -200,7 +231,9 @@ function beagleWriteMetadata(page, tmpfilepath)
   stream.write(line, line.length);
 
   // Third line: Mime type
-  line = "text/html\n";
+  //may be should use page.contentType
+  //line = "text/html\n";
+  line = page.contentType + "\n";
   stream.write(line, line.length);
 
   // Additional lines: Properties
@@ -211,175 +244,105 @@ function beagleWriteMetadata(page, tmpfilepath)
   stream.close();
 }
 
-function beagleShouldIndex(page)
-{
-  // user disabled, or can't find beagle-index-url.
-  if (gBeagleRunStatus == -1)
-    return false;
-
-  if (!page || 
-      !page.location || 
-      page.location == 'about:blank' || 
-      !page.location.href) {
-    dump("beagleShouldIndex: strange page: " + page + "\n");
-    return false;
-  }
-
-  try {
-    fPref = gPref.getCharPref('beagle.security.filters');
-    var filtered = fPref.split(';');
-    for (j = 0; j < filtered.length; j++){
-      if (page.location.host.search("/"+filtered[j]+"/i") != -1){
-        dump("beagleShouldIndex: filtered host: " + page.location.host + '\n');
-        gBeagleRunStatus = -2;
-        beagleUpdateStatus ();
-        return false;
-      }
-    }
-  } catch (e) {
-    // Do nothing..
-  }
-
-  if (page.location.protocol == "https:") {
-	var bPref;
-
-	// secure content, check if user wants it indexed
-	try { bPref = gPref.getBoolPref('beagle.security.active'); }
-	catch(e) { bPref = false }
-
-	if (!bPref) {
-	  // don't index. disable and return.
-	  gBeagleRunStatus = -2;
-	  beagleUpdateStatus ();
-	  return false;
-	}
-  } else if (gBeagleRunStatus == -2) {
-	// no longer secure content, re-enable
-	gBeagleRunStatus = 0;
-	beagleUpdateStatus ();
-  }
-  
-  return true;
-}
-
-function beaglePageLoad(event)
-{
-  var page = event.originalTarget;
-
-  if (!beagleShouldIndex (page))
-    return;
-
-  if (!gFile.exists (gEnv.get("HOME") + "/.beagle")) {
-    dump("beaglePageLoad: ~/.beagle doesn't exist, not indexing");
-    return;
-  }
-
-  dump("beaglePageLoad: storing page: " + page.location.href + "\n");
-
-  if (!gFile.exists(gBeagleDataPath)) {
+beagle.onPageLoad = function(event)
+{ 
+    var page = event.originalTarget;
+    if (!this.shouldIndex(page))
+        return;
+    
+    //save file content and metadats
+    var hash = hex_md5(page.location.href);
+    var tmpdatapath = gBeagleDataPath + "/firefox-beagle-" + hash + ".html";
+    var tmpmetapath = gBeagleDataPath + "/.firefox-beagle-" + hash + ".html";
+        
     try {
-      gBeagleDataDir.create ();
-      dump ("beaglePageLoad: Created .beagle/firefox\n");
-    } catch(e) {
-      dump ("beaglePageLoad: Unable to create .beagle/firefox: " + e + "\n");
+        beagleWriteContent(page, tmpdatapath);
+        beagleWriteMetadata(page, tmpmetapath);
+    } catch (ex) {
+        alert ("beaglePageLoad: beagleWriteContent/Metadata failed: " + ex);
     }
-  }
-
-  var hash = hex_md5(page.location.href);
-  var tmpdatapath = gBeagleDataPath + "/firefox-beagle-" + hash + ".html";
-  var tmpmetapath = gBeagleDataPath + "/.firefox-beagle-" + hash + ".html";
-
-  try {
-    beagleWriteContent(page, tmpdatapath);
-    dump ("beaglePageLoad: beagleWriteContent sucessful!\n");
-    beagleWriteMetadata(page, tmpmetapath);
-    dump ("beaglePageLoad: beagleWriteMetadata sucessful!\n");
-  } catch (ex) {
-    alert ("beaglePageLoad: beagleWriteContent/Metadata failed: " + ex);
-  }
 }
 
-function beagleRunBest(query)
+beagle.disable = function()
 {
-  try {
-    dump("Running best with query: "+ query + "\n");
-    var retval = gFile.spawn(gBeagleBestPath, ["", query]);
-    if (retval) 
-      alert("Error running best: " + retval);
-  } catch(e) {
-    alert("Caught error from best: " + e);
-  }
+    var icon = document.getElementById('beagle-notifier-status');
+    icon.setAttribute("status","00f");
+    icon.setAttribute("tooltiptext",_("beagle_tooptip_disabled");
+
+    this.pref.load();
+    this.pref.prefObject["beagle.enabled"] = false;
+    this.pref.save();
+
+    this.runStatus = this.RUN_DISABLED;
 }
 
-function beagleShowPrefs()
+beagle.enable = function()
 {
-  window.openDialog('chrome://beagle/content/beaglePrefs.xul',
+    var icon = document.getElementById('beagle-notifier-status');
+    icon.setAttribute("status","000");
+    icon.setAttribute("tooltiptext",_("beagle_tooptip_actived");
+
+    this.pref.load();
+    this.pref.prefObject["beagle.enabled"] = true;
+    this.pref.save();
+
+    this.runStatus = this.RUN_ENABLED;
+}
+beagle.error = function(msg)
+{
+    var icon = document.getElementById('beagle-notifier-status');
+    icon.setAttribute("status","f00");
+    icon.setAttribute("tooltiptext",_f("beagle_tooptip_error",msg);
+
+    this.pref.load();
+    this.pref.prefObject["beagle.enabled"] = false;
+    this.pref.save();
+
+    this.runStatus = this.RUN_ERROR;
+}
+
+beagle.showPrefs = function()
+{
+  window.openDialog('chrome://newbeagle/content/beaglePrefs.xul',
 		    'PrefWindow',
 		    'chrome,modal=yes,resizable=no',
 		    'browser');
 }
 
-function beagleProcessClick(event)
+beagel.onIconClick = function(event)
 {
-  // Right-click event.
-  if (event.button == 2) {
-    beagleShowPrefs();
-    return;
-  }
-
-  // Left-click event (also single click, like Mac).
-  if (event.button == 0) {
-    if (event.ctrlKey) {
-      // Ctrl-click for Mac properties.  Works on PC too.
-      beagleShowPrefs();
-    } else {
-      switch(gBeagleRunStatus) {
-      case 0:
-	// currently enabled. disable by user.
-	gBeagleRunStatus = -1;
-        gPref.setBoolPref('beagle.enabled', false);
-	break;
-      case -1:
-      case -2:
-	// currently disabled (by user or by secure content). enable.
-	gBeagleRunStatus = 0;
-        gPref.setBoolPref('beagle.enabled', true);
-	break;
-      default:
-	// last run was an error, show the error
-	alert("Error running Beagle Indexer: " + gBeagleRunStatus);
+    // Right-click event.
+    if (event.button == 2) {
+        //beagleShowPrefs();
         return;
-      }
-
-      beagleUpdateStatus();
     }
-  }
-}
-
-function beagleUpdateStatus()
-{
-  var icon = document.getElementById('beagle-notifier-status');
-
-  switch(gBeagleRunStatus) {
-    case 0: // active
-      icon.setAttribute("status","000");
-      icon.setAttribute("tooltiptext","Beagle indexing active. Click to disable.");
-      break;
-    case -1: // disabled by user
-    case -2: // disabled for secure protocol
-      icon.setAttribute("status","00f");
-      icon.setAttribute("tooltiptext","Beagle indexing disabled.  Click to enable.");
-      break;
-    default: // anything else is an error
-      icon.setAttribute("status","f00");
-      icon.setAttribute("tooltiptext",
-			"Error while indexing: " + gBeagleRunStatus);
-      break;
-  }
+    if (event.button == 0 && event.ctrlKey)
+    {
+        //beagleShowPrefs();
+        return;
+    }
+    // Left-click event (also single click, like Mac).
+    if (event.button == 0 && event.ctrlKey == 0) {
+        switch(this.runStatus)
+        {
+        case this.RUN_ENABLED:
+            // currently enabled. disable 
+            this.disable();
+            break;
+        case this.RUN_DISABLED:
+            // currently disabled  enable.
+            this.enable();
+            break;
+        default:
+            // last run was an error, show the error
+            //alert("Error running Beagle Indexer: " + this.RunStatus);
+            break;
+        }
+    }
 }
 
 // Create event listener.
-window.addEventListener('load', beagleInit, false); 
+window.addEventListener('load', beagle.init, false); 
 
 // Right-click context menu
 function beagleContext()

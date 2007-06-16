@@ -14,7 +14,8 @@ beaglePref.prefKeys = [
   {'name':'beagle.default.action','type':'int'},
   {'name':'beagle.conflict.action','type':'int'},
   {'name':'beagle.include.list','type':'string'},
-  {'name':'beagle.exclude.list','type':'string'}
+  {'name':'beagle.exclude.list','type':'string'},
+  {'name':'beagle.enabled','type':'bool'}
 ];
 
 // Initiate a new preference instance.
