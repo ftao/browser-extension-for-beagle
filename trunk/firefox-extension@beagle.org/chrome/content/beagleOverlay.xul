@@ -5,6 +5,8 @@
 
 <overlay id="BeagleOverlay"
          xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul">
+<stringbundle id="beagleStrings"
+        src="chrome://newbeagle/locale/beagle.properties"/>
 
 <!-- jslib sources used for executing beagle -->
 <script type="application/x-javascript" src="jslib/jslib.js"/>
@@ -13,6 +15,7 @@
 <script type="application/x-javascript" src="jslib/io/dir.js"/>
 <script type="application/x-javascript" src="jslib/io/dirUtils.js"/>
 
+<script type="appilcation/x-javascript" src="i18n.js"/>
 <script type="application/x-javascript" src="md5.js" />
 <script type="application/x-javascript" src="json.js" />
 <script type="application/x-javascript" src="beaglePrefs.js" />
