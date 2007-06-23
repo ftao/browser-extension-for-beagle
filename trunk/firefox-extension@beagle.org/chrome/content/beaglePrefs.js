@@ -29,7 +29,7 @@ beaglePref.prefObject = {};
  */
 beaglePref.load =  function()
 {
-    dump(this.prefKeys.toJSONString());
+    //dump(this.prefKeys.toJSONString());
     
     for(var j = 0 ; j < this.prefKeys.length; j++)
     {
@@ -117,7 +117,7 @@ beaglePref.UIInit = function ()
    		try{
             var items = this.prefObject[elementID].parseJSON(); 
         	var listbox = $(elementID) ;
-            dump("listbox.getRowCount:" + listbox.getRowCount() + '\n');
+            //dump("listbox.getRowCount:" + listbox.getRowCount() + '\n');
             var num = listbox.getRowCount();
             for (var j = 0; j < num; j++)
                 listbox.removeItemAt(0);
@@ -180,7 +180,7 @@ beaglePref.onSave = function ()
                 items.push({'name':name,'pattern':pattern,'patternType':patternType});
       		}
 			var value = items.toJSONString();
-            dump(value)
+            //dump(value)
             prefs[elementID] = value;
    		} catch(e) {
           	// We don't seem to care about this.
