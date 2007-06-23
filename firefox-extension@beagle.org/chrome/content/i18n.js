@@ -1,26 +1,24 @@
 //check the string budles
-
-var bundles = document.getElementByTagName('stringbundle');
-
-var mapping = {};
-
+var bundles  = new Array();
+//bundles = document.getElementsByTagName('stringbundle');
+bundles.push(document.getElementById('beagleStrings'));
 function gettext(key)
 {
-    //if this string have been looked up before
-    if(mapping[stringId])
-        return mapping[stringId];
-
+    dump("\ncallled gettext \n");
     var ret = null;
     for(var i = 0 ; i < bundles.length; i++)
     {
-        ret = bundles[i].getString(key);
+        try{
+            ret = bundles[i].getString(key);
+        }
+        catch(e){}
         if (ret != null)
             break;  
     }
-    //not found , just return the orgi  orginal string 
+    //not found , just return the  orginal string 
     if (ret == null) 
         ret = key;
-    mapping[key] = ret;
+    dump(ret + '\n');
     return ret;
 }
 
@@ -29,26 +27,28 @@ function _(key)
     return gettext(key);
 }
 
-function getformatedtext()
+function getformatedtext(key,subs)
 {
-    key = arguments.shift();
     var ret = null;
     for(var i = 0 ; i < bundles.length; i++)
     {
-        ret = bundles[i].getString(key);
-        if (ret != null)
-        {
-            return bundles[i].getFormattedString(key,arguments);
+        try{
+            ret = bundles[i].getString(key);
+            if (ret != null)
+            {
+                return bundles[i].getFormattedString(key,subs);
+            }
         }
+        catch(e){}
     }
-    //not found , just return the orgi  orginal string 
+    //not found , just return the   orginal string 
     if (ret == null) 
-        ret = stringId;
-    
+        ret = key;
+    return ret;
 }
 
-function _f()
+function _f(key,subs)
 {
-    getformatedtext.applay(null,arguments);   
+    return getformatedtext(key,subs);   
 }
 
