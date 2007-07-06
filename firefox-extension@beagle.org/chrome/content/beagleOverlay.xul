@@ -5,8 +5,12 @@
 
 <overlay id="BeagleOverlay"
          xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul">
-<stringbundle id="beagleStrings"
-        src="chrome://newbeagle/locale/beagle.properties"/>
+         
+<stringbundleset id="stringbundleset">
+    <stringbundle id="beagleStrings"
+            src="chrome://newbeagle/locale/beagle.properties"/>
+</stringbundleset>
+
 
 <!-- jslib sources used for executing beagle -->
 <script type="text/javascript" src="jslib/jslib.js"/>
@@ -52,11 +56,20 @@
 -->
 
 <statusbar id="status-bar">
-  <statusbarpanel
-    class="statusbarpanel-iconic"
-    id="beagle-notifier-status"
-    onmouseup="beagleProcessClick(event);"
-    status="000"
-  />
+    <statusbarpanel
+        class="statusbarpanel-menu-iconic"
+        id="beagle-notifier-status"
+        onclick="beagleProcessClick(event)"
+        context='beagle-status-popup'
+        status="000"
+        >
+    </statusbarpanel> 
+    <menupopup id="beagle-status-popup" position="before_end">
+        <menuitem id="beagle-index-this-menu" label="&beagle.run.index.this;" 
+            oncommand="beagle.indexIt(document.getElementById('content').selectedBrowser.contentDocument)"/>
+        <menuseparator />
+    </menupopup>
 </statusbar> 
+
+
 </overlay>

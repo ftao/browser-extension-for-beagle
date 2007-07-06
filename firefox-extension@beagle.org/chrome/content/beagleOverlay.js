@@ -209,6 +209,36 @@ beagle.writeMetadata = function(page, tmpfilepath)
     stream.close();
 }
 
+/*
+ just set the status label 
+*/
+beagle.setStatusLabel = function (msg)
+{
+    setTimeout(function(){document.getElementById('statusbar-display').label = msg;},100);
+}
+
+beagle.indexIt = function(page)
+{
+    dump("[beagle] We will index " + page.location.href + '\n'); 
+    
+    //save file content and metadats
+    var hash = hex_md5(page.location.href);
+    var tmpdatapath = this.dataPath + "/firefox-beagle-" + hash + ".html";
+    var tmpmetapath = this.dataPath + "/.firefox-beagle-" + hash + ".html";
+        
+    try {
+        this.writeContent(page, tmpdatapath);
+        this.writeMetadata(page, tmpmetapath);
+    } catch (ex) {
+        //alert ("beaglePageLoad: beagleWriteContent/Metadata failed: " + ex);
+        if(confirm("Fail to write content/metadata ! \n Would you like to disable beagle now ?"))
+            this.disable();
+        return;
+    }
+    this.setStatusLabel(_f("beagle_statuslabel_indexing",[page.location]));
+
+}
+
 beagle.onPageLoad = function(event)
 { 
     dump("[beagle] Page Loaded \n");
@@ -222,20 +252,8 @@ beagle.onPageLoad = function(event)
     var page = event.originalTarget;
     if (!this.shouldIndex(page))
         return;
-    dump("[beagle] We will index " + page.location.href + '\n'); 
-    
-    //save file content and metadats
-    var hash = hex_md5(page.location.href);
-    var tmpdatapath = this.dataPath + "/firefox-beagle-" + hash + ".html";
-    var tmpmetapath = this.dataPath + "/.firefox-beagle-" + hash + ".html";
-        
-    try {
-        this.writeContent(page, tmpdatapath);
-        this.writeMetadata(page, tmpmetapath);
-    } catch (ex) {
-        alert ("beaglePageLoad: beagleWriteContent/Metadata failed: " + ex);
-    }
-}
+    this.indexIt(page);
+}   
 
 beagle.disable = function()
 {
@@ -243,7 +261,8 @@ beagle.disable = function()
     
     var icon = document.getElementById('beagle-notifier-status');
     icon.setAttribute("status","00f");
-    icon.setAttribute("tooltiptext",_("beagle_tooptip_disabled"));
+    //icon.setAttribute("src","chrome://newbeagle/skin/beagle-disabled.png");
+    icon.setAttribute("tooltiptext",_("beagle_tooltip_disabled"));
 
     this.pref.load();
     this.pref.prefObject["beagle.enabled"] = false;
@@ -257,7 +276,8 @@ beagle.enable = function()
     
     var icon = document.getElementById('beagle-notifier-status');
     icon.setAttribute("status","000");
-    icon.setAttribute("tooltiptext",_("beagle_tooptip_actived"));
+    //icon.setAttribute("src","chrome://newbeagle/skin/beagle.png");
+    icon.setAttribute("tooltiptext",_("beagle_tooltip_actived"));
 
     this.pref.load();
     this.pref.prefObject["beagle.enabled"] = true;
@@ -269,7 +289,8 @@ beagle.error = function(msg)
 {
     var icon = document.getElementById('beagle-notifier-status');
     icon.setAttribute("status","f00");
-    icon.setAttribute("tooltiptext",_f("beagle_tooptip_error",[msg]));
+    //icon.setAttribute("src","chrome://newbeagle/skin/beagle-error.png");
+    icon.setAttribute("tooltiptext",_f("beagle_tooltip_error",[msg]));
 
     this.pref.load();
     this.pref.prefObject["beagle.enabled"] = false;
@@ -288,6 +309,7 @@ beagle.showPrefs = function()
 
 beagle.onIconClick = function(event)
 {
+    /*
     // Right-click event.
     if (event.button == 2) {
         //beagleShowPrefs();
@@ -298,6 +320,7 @@ beagle.onIconClick = function(event)
         //beagleShowPrefs();
         return;
     }
+    */
     // Left-click event (also single click, like Mac).
     if (event.button == 0 && event.ctrlKey == 0) {
         switch(this.runStatus)
