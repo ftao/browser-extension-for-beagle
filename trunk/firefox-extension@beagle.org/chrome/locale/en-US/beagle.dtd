@@ -22,3 +22,5 @@
 <!ENTITY beagle.pref.filter.remove                  "Remove">
 <!ENTITY beagle.pref.export                         "Export">
 <!ENTITY beagle.pref.import                         "Import">
+
+<!ENTITY beagle.run.index.this                      "Index This Page">
