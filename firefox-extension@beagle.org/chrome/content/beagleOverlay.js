@@ -35,7 +35,6 @@ beagle.init = function()
     {
         this.runStatus = this.RUN_BEAGLE_NOT_FOUND;
         this.error(_("beagle_not_found"));
-        return ;
     }
     else
     {
@@ -50,15 +49,28 @@ beagle.init = function()
         this.dataPath = gEnv.get("HOME") + "/.beagle/ToIndex";  
         if(!gFile.exists(this.dataPath))
             ;// do something here ? is it safe to create the dir ?
-        this.addEventListener();
     }
+    this.addEventListener();
 }
 
-beagle.addEventListener = function (){
+beagle.addEventListener = function ()
+{
     // Add listener for page loads
-    if (document.getElementById("appcontent"))
+    if (this.runStatus != this.RUN_BEAGLE_NOT_FOUND && document.getElementById("appcontent"))
         document.getElementById("appcontent").addEventListener("load",beaglePageLoad,true);
+    document.getElementById("contentAreaContextMenu").addEventListener("popupshowing", function(e){ beagle.initContextMenu(e);}, false);
+
     //document.getElementById('beagle-notifier-status').onmouseup = function(event){ bealge.onIconClick(event);};
+}
+
+beagle.initContextMenu = function (e)
+{
+    if(e.originalTarget.id != "contentAreaContextMenu")
+        return;
+    dump("[beagle] gContextMenu " + gContextMenu + "\n");
+    gContextMenu.showItem("context-index-this-link", gContextMenu.onLink && !gContextMenu.onMailtoLink); 
+    //gContextMenu.showItem("context-index-this-image", gContextMenu.onImage && gContextMenu.onLoadedImage); 
+    //gContextMenu.showItem("context-index-this", ); 
 }
 
 beagle.checkEnv = function()
@@ -70,6 +82,28 @@ beagle.checkEnv = function()
     return true;
 }
 
+/*
+Check the page, 
+1. the protocal (We will NOT index about:* file:///* )
+2. check is the page  itself 
+*/
+beagle.checkPage = function(page)
+{
+    if (!page)
+    {
+        dump("[beagle checkPage ] the page doesn't seems to be a page\n");
+        return false;
+    } 
+    if (!page.location ||
+        !page.location.href ||
+        page.location.href.indexOf("about:") == 0 ||
+        page.location.href.indexOf("file:") == 0 )
+    {
+        dump("[beagle checkPage ] strage page " + page + "\n");
+        return false;
+    }
+    return true;
+}
 
 /*
  * check weather the url should index
@@ -77,6 +111,9 @@ beagle.checkEnv = function()
  */
 beagle.shouldIndex = function(page)
 {
+    if(!this.checkPage(page))
+        return false;
+
     var prefObject = this.pref.load();
     
     //check https
@@ -219,6 +256,10 @@ beagle.setStatusLabel = function (msg)
 
 beagle.indexIt = function(page)
 {
+
+    if(!this.checkPage(page))
+        return;
+
     dump("[beagle] We will index " + page.location.href + '\n'); 
     
     //save file content and metadats
@@ -230,13 +271,27 @@ beagle.indexIt = function(page)
         this.writeContent(page, tmpdatapath);
         this.writeMetadata(page, tmpmetapath);
     } catch (ex) {
-        //alert ("beaglePageLoad: beagleWriteContent/Metadata failed: " + ex);
-        if(confirm("Fail to write content/metadata ! \n Would you like to disable beagle now ?"))
-            this.disable();
+        dump ("beaglePageLoad: beagleWriteContent/Metadata failed: " + ex + "\n");
+        //if(confirm("Fail to write content/metadata ! \n Would you like to disable beagle now ?"))
+        //    this.disable();
         return;
     }
     this.setStatusLabel(_f("beagle_statuslabel_indexing",[page.location]));
 
+}
+
+beagle.indexLink = function()
+{
+    var url = gContextMenu.linkURL; 
+    if (!url)
+        return;
+    window.openDialog("chrome://newbeagle/content/indexLink.xul",
+        "","chrome,centerscreen,all,resizable,dialog=no",url,window);
+}
+
+beagle.indexImage = function(image)
+{
+    
 }
 
 beagle.onPageLoad = function(event)
@@ -299,6 +354,18 @@ beagle.error = function(msg)
     this.runStatus = this.RUN_ERROR;
 }
 
+beagle.quickAddRule = function (page,flag)
+{
+    try{
+        var domain =  page.location.hostname;
+        beaglePref.addRule("qa_" + domain,domain,"domain",flag);
+    }
+    catch(e){
+        //alert("Error! Is this a site ?\n");
+        //pass
+    }
+}
+
 beagle.showPrefs = function()
 {
   window.openDialog('chrome://newbeagle/content/beaglePrefs.xul',
@@ -309,19 +376,7 @@ beagle.showPrefs = function()
 
 beagle.onIconClick = function(event)
 {
-    /*
-    // Right-click event.
-    if (event.button == 2) {
-        //beagleShowPrefs();
-        return;
-    }
-    if (event.button == 0 && event.ctrlKey)
-    {
-        //beagleShowPrefs();
-        return;
-    }
-    */
-    // Left-click event (also single click, like Mac).
+   // Left-click event (also single click, like Mac).
     if (event.button == 0 && event.ctrlKey == 0) {
         switch(this.runStatus)
         {
@@ -341,6 +396,7 @@ beagle.onIconClick = function(event)
     }
 }
 
+
 function beagleInit()
 {
     beagle.init();
@@ -354,42 +410,7 @@ function beagleProcessClick(event)
 {
     beagle.onIconClick(event);
 }
+
 // Create event listener.
 window.addEventListener('load', beagleInit, false); 
 
-/*
-// Right-click context menu
-function beagleContext()
-{
-  var bPref;
-
-  // Find context menu display preference.
-  try      { bPref = gPref.getBoolPref('beagle.context.active'); }
-  catch(e) { }
-
-  // Set hidden property of context menu and separators.
-  document.getElementById('beagle-context-menu').hidden = !(bPref);
-  document.getElementById('beagle-context-sep-a').hidden = !(bPref);
-  document.getElementById('beagle-context-sep-b').hidden = !(bPref);
-
-  // If not displaying context menu, return.
-  if (!bPref) return;
-
-  // Separator A (top) display preference.
-  try      { bPref = gPref.getBoolPref('beagle.context.sep.a'); }
-  catch(e) { bPref = false }
-  document.getElementById('beagle-context-sep-a').hidden = !(bPref);
-
-  // Separator B (bottom) display preference.
-  try      { bPref = gPref.getBoolPref('beagle.context.sep.b'); }
-  catch(e) { bPref = false }
-  document.getElementById('beagle-context-sep-b').hidden = !(bPref);
-
-  // Should search link item be hidden or shown?
-  document.getElementById('beagle-context-search-link').hidden = !(gContextMenu.onLink);
-
-  // Should text search item be hidden or shown?
-  document.getElementById('beagle-context-search-text').hidden = !(gContextMenu.isTextSelected);
-  document.getElementById('beagle-context-search-text').setAttribute("label","Search for \"" + gContextMenu.searchSelected() + "\"");
-}
-*/
