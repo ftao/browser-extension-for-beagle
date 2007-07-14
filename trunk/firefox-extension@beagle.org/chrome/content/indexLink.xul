@@ -1,0 +1,26 @@
+<?xml version="1.0"?>
+
+<!DOCTYPE overlay SYSTEM "chrome://newbeagle/locale/beagle.dtd">
+
+<?xml-stylesheet href="chrome://global/skin/global.css" type="text/css"?>
+
+
+<window id="beagle-index-link"
+    title="Beagle Index "
+    xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul">
+  
+<script type="application/x-javascript" 
+		src="chrome://newbeagle/content/utils.js" />
+<script type="application/x-javascript" 
+		src="chrome://newbeagle/content/indexLink.js" />
+
+<textbox id="beagle-index-link-status" readonly="true" value="" disable="true"/>
+<hbox>
+    <button id="beagle-index-link-start" label="start" oncommand="" disabled="true"/>
+    <button id="beagle-index-link-abort" label="abort" oncommand="" />
+</hbox>
+
+<browser id="beagle-invisible-browser" collapsed="true"/>
+
+</window> 
+

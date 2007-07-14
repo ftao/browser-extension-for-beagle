@@ -8,7 +8,9 @@
 <!ENTITY beagle.pref.context.active.label           "Add Beagle options to context menu">
 <!ENTITY beagle.pref.security.active.label          "Index pages with secure content">
 <!ENTITY beagle.pref.default.action.label           "Default Action">
+<!ENTITY beagle.pref.default.action.tooltip         "What to do When the URL doesn't match any rule">
 <!ENTITY beagle.pref.conflict.action.label          "Conflict Action">
+<!ENTITY beagle.pref.conflict.action.tooltip        "What to do When the URL matches both rules in include list and exclude list">
 <!ENTITY beagle.pref.action.index.label             "Index">
 <!ENTITY beagle.pref.action.noindex.label           "No Index">
 <!ENTITY beagle.pref.groupbox.general.label         "General">
@@ -17,10 +19,16 @@
 <!ENTITY beagle.pref.filter.name.label              "Name">
 <!ENTITY beagle.pref.filter.pattern.label           "Pattern">
 <!ENTITY beagle.pref.filter.patterntype.label       "PatternType">
-<!ENTITY beagle.pref.filter.add				        "Add">
-<!ENTITY beagle.pref.filter.edit                    "Edit">
-<!ENTITY beagle.pref.filter.remove                  "Remove">
-<!ENTITY beagle.pref.export                         "Export">
-<!ENTITY beagle.pref.import                         "Import">
+<!ENTITY beagle.pref.filter.add.label		        "Add">
+<!ENTITY beagle.pref.filter.edit.label              "Edit">
+<!ENTITY beagle.pref.filter.remove.label            "Remove">
+<!ENTITY beagle.pref.export.label                   "Export">
+<!ENTITY beagle.pref.import.label                   "Import">
 
-<!ENTITY beagle.run.index.this                      "Index This Page">
+<!ENTITY beagle.run.index.this.label                "Index This Page">
+<!ENTITY beagle.run.always.index.label              "Always Index This Site">
+<!ENTITY beagle.run.never.index.label               "Never  Index This Site">
+<!ENTITY beagle.run.preferences.label               "Preferences">
+<!ENTITY beagle.run.context.menu.label              "Beagle">
+<!ENTITY beagle.run.index.link.label                "Index This Link">
+<!ENTITY beagle.run.index.image.label               "Index This Image">

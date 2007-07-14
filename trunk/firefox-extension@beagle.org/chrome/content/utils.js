@@ -38,7 +38,7 @@ String.prototype.isEndWith = function(subfix)
     return index != -1 && index + subfix.length == this.length;
 }
 
-/*
+/**
  * convert  a wildcard expression to regular expression
  * usage: wildcard.wildcard2RE
  * @return the re string ( not RegExp Object)
@@ -47,3 +47,6 @@ String.prototype.wildcard2RE = function()
 {
     return this.replace(/([\\\+\[\]\{\}\^])/g,"\\$1").replace(/\?/g,".?").replace(/\*/g,".*");
 }
+
+
+

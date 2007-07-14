@@ -25,35 +25,59 @@
 <script type="text/javascript" src="json.js" />
 <script type="text/javascript" src="beaglePrefs.js" />
 <script type="text/javascript" src="beagleOverlay.js" />
-<!--
+
+<commandset id="mainCommandSet">
+    <command id="IndexThisCmd" label="&beagle.run.index.this.label;" 
+        oncommand="beagle.indexIt(document.getElementById('content').selectedBrowser.contentDocument)"/>
+    <command id="AlwaysIndexThisSiteCmd" label="&beagle.run.always.index.label;"  
+        oncommand="beagle.quickAddRule(document.getElementById('content').selectedBrowser.contentDocument,beaglePref.RULE_INCLUDE)"/>
+    <command id="NeverIndexThisSiteCmd" label="&beagle.run.never.index.label;" 
+        oncommand="beagle.quickAddRule(document.getElementById('content').selectedBrowser.contentDocument,beaglePref.RULE_EXCLUDE)"/>
+    <command id="ShowPrefsCmd" label="&beagle.run.preferences.label;" 
+            oncommand="beagle.showPrefs()"/>
+    <command id="IndexThisLinkCmd" label="&beagle.run.index.link.label;" 
+        oncommand="beagle.indexLink(event.originalTarget)"/>
+    <command id="IndexThisImageCmd" label="&beagle.run.index.image.label;" 
+        oncommand="beagle.indexImage(event.originalTarget)"/>
+
+</commandset>
+
+
+<toolbarpalette id="BrowserToolbarPalette">
+    <toolbarbutton id="beagle-button" type="menu-button"
+                   class="toolbarbutton-1 chromeclass-toolbar-additional"
+                   ondragdrop="alert('drop');"
+                   context="beagle-toolbar-popup"
+                   tooltiptext="&beagle.run.index.this.label;"
+                   label="beagle">
+        <menupopup id="beagle-toolbar-popup" >
+            <menuitem  command="IndexThisCmd"/>
+            <menuseparator />
+            <menuitem  command="AlwaysIndexThisSiteCmd"/> 
+            <menuitem  command="NeverIndexThisSiteCmd"/> 
+            <menuseparator />
+            <menuitem  command="ShowPrefsCmd"/> 
+        </menupopup>
+    </toolbarbutton>
+</toolbarpalette>
+
 <popup id="contentAreaContextMenu">
-  <menuseparator id="beagle-context-sep-a" />
-  <menu id="beagle-context-menu" label="&beagle.context.menu.label;">
-    <menupopup id="beagle-context-menu-items">
-      <menuitem
-        id="beagle-context-search-link"
-        label="&beagle.context.search.link.label;"
-        oncommand="beagleRunBest(gContextMenu.linkURL());"
-      />
-      <menuitem
-        id="beagle-context-search-page"
-        label="&beagle.context.search.page.label;"
-        oncommand="beagleRunBest(getWebNavigation().currentURI.spec);"
-      />
-      <menuitem
-        id="beagle-context-search-text"
-        oncommand="beagleRunBest(gContextMenu.searchSelected());"
-      />
-      <menuitem
-        id="beagle-context-prefs"
-        label="&beagle.context.prefs.label;"
-        oncommand="window.openDialog('chrome://newbeagle/content/beaglePrefs.xul','PrefWindow','chrome,modal=yes,resizable=no','browser');"
-      />
-    </menupopup>
-  </menu>
-  <menuseparator id="beagle-context-sep-b" />
+    <menuseparator />
+    <menu label="&beagle.run.context.menu.label;">
+        <menupopup id="beagle-content-popup">
+            <menuitem  id="context-index-this-link" command="IndexThisLinkCmd"/>
+            <!--<menuitem  id="context-index-this-image" command="IndexThisImageCmd"/>-->
+            <menuitem  id="context-index-this" command="IndexThisCmd"/>
+            <menuseparator />
+            <menuitem command="AlwaysIndexThisSiteCmd"/> 
+            <menuitem command="NeverIndexThisSiteCmd"/> 
+            <menuseparator />
+            <menuitem command="ShowPrefsCmd"/> 
+        </menupopup>
+    </menu>
+    <menuseparator />
+
 </popup>
--->
 
 <statusbar id="status-bar">
     <statusbarpanel
@@ -65,11 +89,12 @@
         >
     </statusbarpanel> 
     <menupopup id="beagle-status-popup" position="before_end">
-        <menuitem id="beagle-index-this-menu" label="&beagle.run.index.this;" 
-            oncommand="beagle.indexIt(document.getElementById('content').selectedBrowser.contentDocument)"/>
+        <menuitem command="IndexThisCmd"/>
         <menuseparator />
-    </menupopup>
+        <menuitem command="AlwaysIndexThisSiteCmd"/> 
+        <menuitem command="NeverIndexThisSiteCmd"/> 
+        <menuseparator />
+        <menuitem command="ShowPrefsCmd"/> 
+   </menupopup>
 </statusbar> 
-
-
 </overlay>

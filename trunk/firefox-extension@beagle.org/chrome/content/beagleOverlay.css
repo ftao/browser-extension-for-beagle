@@ -18,3 +18,11 @@ statusbarpanel#beagle-notifier-status[status="f00"] {
   padding-right: 8px;
   padding-top: 2px;
 }
+
+#beagle-button {
+  list-style-image: url("chrome://newbeagle/skin/beagle.png");
+}
+
+toolbar[iconsize="small"] #beagle-button {
+  list-style-image: url("chrome://newbeagle/skin/beagle.png");
+}

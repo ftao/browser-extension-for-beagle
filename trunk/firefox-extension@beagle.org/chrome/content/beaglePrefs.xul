@@ -45,14 +45,14 @@
       type="checkbox" 
       />
     <hbox>
-        <label>&beagle.pref.default.action.label;:</label>
+        <label tooltiptext="&beagle.pref.default.action.tooltip;">&beagle.pref.default.action.label;:</label>
         <radiogroup id="beagle.default.action" orient="horizontal">
             <radio id="beagle.default.action.noindex" value="0" label="&beagle.pref.action.noindex.label;" />
             <radio id="beagle.default.action.index" value="1" label="&beagle.pref.action.index.label;"/>
         </radiogroup>
     </hbox>
     <hbox>
-        <label>&beagle.pref.conflict.action.label;:</label>
+        <label tooltiptext="&beagle.pref.conflict.action.tooltip;">&beagle.pref.conflict.action.label;:</label>
         <radiogroup id="beagle.conflict.action" orient="horizontal">
             <radio id="beagle.conflict.action.noindex" value="0" label="&beagle.pref.action.noindex.label;" />
             <radio id="beagle.conflict.action.index" value="1" label="&beagle.pref.action.index.label;"/>
@@ -117,19 +117,19 @@
 <button command="ImportCmd"/>
 </hbox>
 
-<command id="AddIncludeFilterCmd" label="&beagle.pref.filter.add;" oncommand="beaglePref.onAddFilter('include')"/>
-<command id="AddExcludeFilterCmd" label="&beagle.pref.filter.add;" oncommand="beaglePref.onAddFilter('exclude')"/>
-<command id="RemoveIncludeFilterCmd" label="&beagle.pref.filter.remove;" oncommand="beaglePref.onRemoveFilter('include')"/>
-<command id="RemoveExcludeFilterCmd" label="&beagle.pref.filter.remove;" oncommand="beaglePref.onRemoveFilter('exclude')"/>
-<command id="ExportCmd" label="&beagle.pref.export;" oncommand="beaglePref.onExport()"/>
-<command id="ImportCmd" label="&beagle.pref.import;" oncommand="beaglePref.onImport()"/>
-
+<command id="AddIncludeFilterCmd" label="&beagle.pref.filter.add.label;" oncommand="beaglePref.onAddFilter('include')"/>
+<command id="AddExcludeFilterCmd" label="&beagle.pref.filter.add.label;" oncommand="beaglePref.onAddFilter('exclude')"/>
+<command id="RemoveIncludeFilterCmd" label="&beagle.pref.filter.remove.label;" oncommand="beaglePref.onRemoveFilter('include')"/>
+<command id="RemoveExcludeFilterCmd" label="&beagle.pref.filter.remove.label;" oncommand="beaglePref.onRemoveFilter('exclude')"/>
+<command id="ExportCmd" label="&beagle.pref.export.label;" oncommand="beaglePref.onExport()"/>
+<command id="ImportCmd" label="&beagle.pref.import.label;" oncommand="beaglePref.onImport()"/>
+<!--
 <preferences>
 	<preference name="beagle.pref.include.list" type="string"/>
 	<preference name="beagle.pref.exclude.list" type="string"/>
 	<preference name="beagle.pref.security.active" type="bool"/>
 </preferences>
-
+-->
 </dialog> 
 
 

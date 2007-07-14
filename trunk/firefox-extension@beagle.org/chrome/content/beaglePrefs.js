@@ -7,6 +7,10 @@ var appUID = "browser-extension@beagle.org"
 //namespace object
 var beaglePref = new Object();
 
+//some constant 
+beaglePref.RULE_INCLUDE = 1;
+beaglePref.RULE_EXCLUDE = 2;
+
 // Declare Pref Keys and Type.
 beaglePref.prefKeys = [ 
   {'name':'beagle.context.active','type':'bool'},
@@ -43,6 +47,7 @@ beaglePref.load =  function()
             break;
         case 'int':
             this.prefObject[this.prefKeys[j]['name']] = this.prefService.getIntPref(this.prefKeys[j]['name']);
+            break;
         }
     }
     return this.prefObject;
@@ -270,6 +275,27 @@ beaglePref.onImport = function ()
     }
 }
 
+
+beaglePref.addRule = function (name,pattern,type,flag)
+{
+    this.load();
+    switch(flag)
+    {
+    case this.RULE_INCLUDE:
+        key = "beagle.include.list";
+        break;
+    case this.RULE_EXCLUDE:
+        key = "beagle.exclude.list";
+        break;
+    default:
+        //error
+        return;
+    }
+    var rules = this.prefObject[key].parseJSON();
+    rules.push({"name":name,"pattern":pattern,"patternType":type});
+    this.prefObject[key] = rules.toJSONString();
+    this.save();
+}
 
 /*
 function updateFilterAddButton() {
