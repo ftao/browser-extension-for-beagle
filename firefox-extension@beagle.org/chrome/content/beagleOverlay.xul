@@ -28,7 +28,7 @@
 
 <commandset id="mainCommandSet">
     <command id="IndexThisCmd" label="&beagle.run.index.this.label;" 
-        oncommand="beagle.indexIt(document.getElementById('content').selectedBrowser.contentDocument)"/>
+        oncommand="beagle.indexPage(document.getElementById('content').selectedBrowser.contentDocument)"/>
     <command id="AlwaysIndexThisSiteCmd" label="&beagle.run.always.index.label;"  
         oncommand="beagle.quickAddRule(document.getElementById('content').selectedBrowser.contentDocument,beaglePref.RULE_INCLUDE)"/>
     <command id="NeverIndexThisSiteCmd" label="&beagle.run.never.index.label;" 
@@ -42,11 +42,11 @@
 
 </commandset>
 
-
+<!-- toolbar is not necessary -->
+<!--
 <toolbarpalette id="BrowserToolbarPalette">
     <toolbarbutton id="beagle-button" type="menu-button"
                    class="toolbarbutton-1 chromeclass-toolbar-additional"
-                   ondragdrop="alert('drop');"
                    context="beagle-toolbar-popup"
                    tooltiptext="&beagle.run.index.this.label;"
                    label="beagle">
@@ -60,6 +60,7 @@
         </menupopup>
     </toolbarbutton>
 </toolbarpalette>
+-->
 
 <popup id="contentAreaContextMenu">
     <menuseparator />
@@ -83,7 +84,6 @@
     <statusbarpanel
         class="statusbarpanel-menu-iconic"
         id="beagle-notifier-status"
-        onclick="beagleProcessClick(event)"
         context='beagle-status-popup'
         status="000"
         >

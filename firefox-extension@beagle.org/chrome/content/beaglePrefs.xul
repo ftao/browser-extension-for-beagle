@@ -13,6 +13,11 @@
   flex="1"
   style="min-width:500px"
   xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul">
+    <stringbundleset id="stringbundleset">
+        <stringbundle id="beagleStrings"
+                src="chrome://newbeagle/locale/beagle.properties"/>
+    </stringbundleset>
+
 
     <!-- jslib sources used for executing beagle -->
     <script type="text/javascript" src="jslib/jslib.js"/>
@@ -23,6 +28,8 @@
 
     <script type="text/javascript" src="json.js" />
       
+    <script type="text/javascript" src="i18n.js" />
+    
     <script type="text/javascript" src="beaglePrefs.js" />
       
     <dialogheader title="&beagle.pref.label;"/>
