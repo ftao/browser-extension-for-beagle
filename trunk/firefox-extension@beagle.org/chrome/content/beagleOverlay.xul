@@ -66,7 +66,7 @@
     <menu label="&beagle.run.context.menu.label;">
         <menupopup id="beagle-content-popup">
             <menuitem  id="context-index-this-link" command="IndexThisLinkCmd"/>
-            <!--<menuitem  id="context-index-this-image" command="IndexThisImageCmd"/>-->
+            <menuitem  id="context-index-this-image" command="IndexThisImageCmd"/>
             <menuitem  id="context-index-this" command="IndexThisCmd"/>
             <menuseparator />
             <menuitem command="AlwaysIndexThisSiteCmd"/> 

@@ -22,6 +22,8 @@ var gEnv = Components.classes["@mozilla.org/process/environment;1"].getService(C
 // Load jslib parts used in file execution
 var gFile = new FileUtils();
 
+//tasks (add a task when index link, and remove it after finish index )
+beagle.tasks = [];
 
 /*
  * init beagle, init status, init pathes .....
@@ -67,9 +69,9 @@ beagle.initContextMenu = function (e)
 {
     if(e.originalTarget.id != "contentAreaContextMenu")
         return;
-    dump("[beagle] gContextMenu " + gContextMenu + "\n");
+    //dump("[beagle] gContextMenu " + gContextMenu + "\n");
     gContextMenu.showItem("context-index-this-link", gContextMenu.onLink && !gContextMenu.onMailtoLink); 
-    //gContextMenu.showItem("context-index-this-image", gContextMenu.onImage && gContextMenu.onLoadedImage); 
+    gContextMenu.showItem("context-index-this-image", gContextMenu.onImage && gContextMenu.onLoadedImage); 
     //gContextMenu.showItem("context-index-this", ); 
 }
 
@@ -211,9 +213,9 @@ beagle.writeContent = function(page, tmpfilepath)
 }
 
 /**
- write meatadata  (include URI hittype mimetype characterset etc)
+ write raw-meatadata 
 */
-beagle.writeMetadata = function(page, tmpfilepath)
+beagle.writeRawMetadata = function(meta, tmpfilepath)
 {
     var tmpfile = Components.classes["@mozilla.org/file/local;1"].createInstance(Components.interfaces.nsILocalFile);
     tmpfile.initWithPath(tmpfilepath);
@@ -223,27 +225,29 @@ beagle.writeMetadata = function(page, tmpfilepath)
     stream.init(tmpfile, 0x04 | 0x08 | 0x20, 0600, 0);
 
     var line;
-
-    // First line: URI
-    line = page.location.href + "\n";
-    stream.write(line, line.length);
-
-    // Second line: Hit Type
-    line = "WebHistory\n";
-    stream.write(line, line.length);
-
-    // Third line: Mime type
-    //may be should use page.contentType
-    //line = "text/html\n";
-    line = page.contentType + "\n";
-    stream.write(line, line.length);
-
-    // Additional lines: Properties
-    line = "k:_unindexed:encoding=" + page.characterSet + "\n";
-    stream.write(line, line.length);
-
+    dump("metas dumping \n");
+    for(var i = 0; i < meta.length; i++)
+    {
+        line = meta[i] + "\n";
+        dump(line);
+        stream.write(line, line.length);
+    }
     stream.flush();
     stream.close();
+}
+
+
+/**
+ write meatadata  (include URI hittype mimetype characterset etc)
+*/
+beagle.writeMetadata = function(page, tmpfilepath)
+{
+    var meta = [
+        page.location.href,
+        'WebHistory',
+        page.contentType,
+        "k:_uniddexed:encoding="+page.characterSet];
+    beagle.writeRawMetadata(meta,tmpfilepath);
 }
 
 /*
@@ -254,7 +258,7 @@ beagle.setStatusLabel = function (msg)
     setTimeout(function(){document.getElementById('statusbar-display').label = msg;},100);
 }
 
-beagle.indexIt = function(page)
+beagle.indexPage = function(page)
 {
 
     if(!this.checkPage(page))
@@ -264,8 +268,8 @@ beagle.indexIt = function(page)
     
     //save file content and metadats
     var hash = hex_md5(page.location.href);
-    var tmpdatapath = this.dataPath + "/firefox-beagle-" + hash + ".html";
-    var tmpmetapath = this.dataPath + "/.firefox-beagle-" + hash + ".html";
+    var tmpdatapath = this.dataPath + "/firefox-beagle-" + hash;
+    var tmpmetapath = this.dataPath + "/.firefox-beagle-" + hash;
         
     try {
         this.writeContent(page, tmpdatapath);
@@ -280,18 +284,67 @@ beagle.indexIt = function(page)
 
 }
 
+beagle.indexFile = function(url,contentType)
+{
+
+    dump("[beagle] We will index " + url + '\n'); 
+    
+    //save file content and metadats
+    var hash = hex_md5(url);
+    var tmpmetapath = this.dataPath + "/.firefox-beagle-" + hash;
+    var meta = [url,'WebHistory',contentType];
+    if(this.tasks[url] && this.tasks[url]['meta'])
+    {
+        meta = meta.concat(this.tasks[url]['meta'])
+    }
+    try {
+        this.writeRawMetadata(meta, tmpmetapath);
+    } catch (ex) {
+        dump ("beagleIndexFile: beage write Metadata failed: " + ex + "\n");
+        //    this.disable();
+        return;
+    }
+    this.setStatusLabel(_f("beagle_statuslabel_indexing",[url]));
+}
+
+
 beagle.indexLink = function()
 {
     var url = gContextMenu.linkURL; 
     if (!url)
         return;
+    var hash = hex_md5(url);
+    var tmpdatapath = this.dataPath + "/firefox-beagle-" + hash;
+    //this.tasks[url] = {meta:[]}; 
     window.openDialog("chrome://newbeagle/content/indexLink.xul",
-        "","chrome,centerscreen,all,resizable,dialog=no",url,window);
+        "","chrome,centerscreen,all,resizable,dialog=no",window,url,tmpdatapath);
 }
 
-beagle.indexImage = function(image)
+beagle.indexImage = function()
 {
-    
+    var image = gContextMenu.target; 
+    if(image.tagName.toLowerCase() != 'img' || !image.src)
+        return;
+    var url = image.src;
+    var hash = hex_md5(url);
+    var tmpdatapath = this.dataPath + "/firefox-beagle-" + hash;
+    this.tasks[url] = {
+        meta:["t:alttext="+(image.getAttribute('alt')?image.getAttribute('alt'):"")],
+    };
+    window.openDialog("chrome://newbeagle/content/indexLink.xul",
+        "","chrome,centerscreen,all,resizable,dialog=no",window,url,tmpdatapath);
+}
+
+beagle.onLinkLoad = function(url,contentType,doc)
+{
+    if(contentType.match(/(text|html|xml)/i) && doc)// a document
+    {
+        beagle.indexPage(doc);
+    }
+    else
+    {
+        beagle.indexFile(url,contentType);
+    }
 }
 
 beagle.onPageLoad = function(event)
@@ -307,7 +360,7 @@ beagle.onPageLoad = function(event)
     var page = event.originalTarget;
     if (!this.shouldIndex(page))
         return;
-    this.indexIt(page);
+    this.indexPage(page);
 }   
 
 beagle.disable = function()

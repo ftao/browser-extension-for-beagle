@@ -13,7 +13,6 @@ beaglePref.RULE_EXCLUDE = 2;
 
 // Declare Pref Keys and Type.
 beaglePref.prefKeys = [ 
-  {'name':'beagle.context.active','type':'bool'},
   {'name':'beagle.security.active','type':'bool'},
   {'name':'beagle.default.action','type':'int'},
   {'name':'beagle.conflict.action','type':'int'},
@@ -21,6 +20,7 @@ beaglePref.prefKeys = [
   {'name':'beagle.exclude.list','type':'string'},
   {'name':'beagle.enabled','type':'bool'}
 ];
+//{'name':'beagle.context.active','type':'bool'},
 
 // Initiate a new preference instance.
 beaglePref.prefService = Components.classes['@mozilla.org/preferences-service;1'].getService(Components.interfaces.nsIPrefBranch);
@@ -83,7 +83,8 @@ beaglePref.init = function ()
 
 beaglePref.UIInit = function ()
 {
-    var checkboxElements = ["beagle.security.active","beagle.context.active"]
+    //var checkboxElements = ["beagle.security.active","beagle.context.active"]
+    var checkboxElements = ["beagle.security.active"]
     for(var i = 0; i < checkboxElements.length; i++)
     {
         var elementID = checkboxElements[i];
