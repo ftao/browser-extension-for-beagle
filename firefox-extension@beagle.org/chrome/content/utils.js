@@ -48,5 +48,10 @@ String.prototype.wildcard2RE = function()
     return this.replace(/([\\\+\[\]\{\}\^])/g,"\\$1").replace(/\?/g,".?").replace(/\*/g,".*");
 }
 
-
+Function.prototype.bind = function(f,obj) {
+    var temp = function() {
+        return f.apply(obj, arguments);
+    };
+    return temp;
+}
 
