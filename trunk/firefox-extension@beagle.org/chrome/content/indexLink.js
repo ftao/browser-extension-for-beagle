@@ -5,19 +5,26 @@ a browser used to download the link/image and index it
 beagleInvisibleBrowser = {
 
 	get ELEMENT() { return document.getElementById("beagle-invisible-browser"); },
+    
     get STATUS_ELEMENT() { return document.getElementById("beagle-index-link-status");},
+    
     get START_BUTTON() { return document.getElementById("beagle-index-link-start");},
+    
     get STOP_BUTTON() { return document.getElementById("beagle-index-link-stop");},
+    
     currentURL: null,
+    
     currentContentType:null,
+    
     isDocument:null,
-    opener : null,
-	onload : null,
+	
+    onload : null,
+    
     sniffer: null,
+    
 
-	init : function(opener,url)
+	init : function(url)
 	{
-        this.opener = opener;
         this.currentURL = url;
         this.sniffer = new headerSniffer(
             url,
@@ -42,10 +49,10 @@ beagleInvisibleBrowser = {
         {
             hosturi = urifix.createFixupURI(uri.host, 0);
         }
-        var persist = Components.classes['@mozilla.org/embedding/browser/nsWebBrowserPersist;1'].createInstance(Components.interfaces.nsIWebBrowserPersist);
-        persist.persistFlags = this.opener.beagle.getPersistMask();
-        persist.progressListener =  this;
-        persist.saveURI(uri, cacheKey, hosturi, null, null, tmpfile);
+        this.persist = Components.classes['@mozilla.org/embedding/browser/nsWebBrowserPersist;1'].createInstance(Components.interfaces.nsIWebBrowserPersist),
+        this.persist.persistFlags = window.opener.beagle.PersistMask;
+        this.persist.progressListener =  this;
+        this.persist.saveURI(uri, cacheKey, hosturi, null, null, tmpfile);
     
     },
 
@@ -61,24 +68,35 @@ beagleInvisibleBrowser = {
 
     reload : function()
     {
-        this.ELEMENT.reload();
         this.START_BUTTON.disabled=true;
         this.STOP_BUTTON.disabled=false;
+        this.init(this.currentURL);
     },
     
     stop : function()
     {
-        this.ELEMENT.stop();
+        if(this.isDcoument)
+            this.ELEMENT.stop();
+        else
+        {
+            this.persist.progressListener =  null;
+            this.persist.cancelSave();
+            try{
+                var tmpfile = Components.classes["@mozilla.org/file/local;1"].createInstance(Components.interfaces.nsILocalFile);
+                tmpfile.initWithPath(window.opener.beagle.getContentPath(this.currentURL));
+                tmpfile.remove(false);
+            }
+            catch(ex){ dump(ex + "\n");}
+        }
         this.START_BUTTON.disabled=false;
         this.STOP_BUTTON.disabled=true;
-		this.STATUS_ELEMENT.value = "STOPPED";
+		this.STATUS_ELEMENT.value = _("beagle_index_link_stop");
     },
 
 	doIndex : function()
 	{
 		this.STATUS_ELEMENT.value = _f("beagle_index_link_saving",[this.currentURL]);
-
-        this.opener.beagle.onLinkLoad(this.currentURL,this.currentContentType,this.ELEMENT.contentDocument);
+        window.opener.beagle.onLinkLoad(this.currentURL,this.currentContentType,this.ELEMENT.contentDocument);
         window.close();
 	},
 
@@ -101,8 +119,8 @@ beagleInvisibleBrowser = {
 		}
 		if ( !this.isDocument && aStateFlags & Components.interfaces.nsIWebProgressListener.STATE_STOP )
         {
-            this.STATUS_ELEMENT.value = "Finish Loading" + this.currentURL;
-            this.opener.beagle.onLinkLoad(this.currentURL,this.currentContentType,null);
+            this.STATUS_ELEMENT.value = _f("beagle_index_link_saving",[this.currentURL]);
+            window.opener.beagle.onLinkLoad(this.currentURL,this.currentContentType,null);
             window.close();
         }
 	},
@@ -111,8 +129,9 @@ beagleInvisibleBrowser = {
 	{
         if ( aCurTotalProgress != aMaxTotalProgress )
         {
-            this.STATUS_ELEMENT.value = _f("beagle_index_link_progress",[aCurTotalProgress,aMaxTotalProgress,this.currentURL]); 
-        }
+            var progress = (aMaxSelfProgress > 0) ? Math.round(aCurSelfProgress / aMaxSelfProgress * 100) + "%" : aCurSelfProgress + "Bytes";
+            this.STATUS_ELEMENT.value = _f("beagle_index_link_progress",[progress,this.currentURL]); 
+        } 
 	},
 
 	onStatusChange   : function() {},
@@ -134,7 +153,7 @@ beagleInvisibleBrowser = {
         }
         else
         {
-            this.save(url,window.arguments[2]);
+            this.save(url,window.opener.beagle.getContentPath(url));
             this.isDocument = false;
         }
     },
@@ -176,7 +195,7 @@ headerSniffer.prototype = {
 			this._channel.setRequestHeader("User-Agent", navigator.userAgent, false);
 			if ( this.refURLSpec ) this._channel.setRequestHeader("Referer", this.refURLSpec, false);
 		} catch(ex) {
-			this.onError(_("Invalid URL"));
+			this.onError(_("beagle_index_link_invalid_url"));
 		}
 		try {
 			this._channel.requestMethod = "HEAD";
@@ -207,9 +226,9 @@ headerSniffer.prototype = {
 		
         switch ( httpStatus )
 		{
-			case 404 : this.onError(_("HTTP_STATUS_404") + " (404 Not Found)"); return;
-			case 403 : this.onError(_("HTTP_STATUS_403") + " (403 Forbidden)"); return;
-			case 500 : this.onError(_("HTTP_STATUS_500") + "500 Internal Server Error"); return;
+			case 404 : this.onError(_("beagle_index_link_http_403")); return;
+			case 403 : this.onError(_("beagle_index_link_http_404")); return;
+			case 500 : this.onError(_("beagle_index_link_http_500")); return;
 		}
 
         //if redirect 
@@ -235,7 +254,5 @@ headerSniffer.prototype = {
 
 window.onload = function()
 {
-    //alert(window.arguments[0]);
-    beagleInvisibleBrowser.init(window.arguments[0],window.arguments[1]);
-   //beagleInvisibleBrowser.load(window.arguments[0]);
+    beagleInvisibleBrowser.init(window.arguments[0]);
 }

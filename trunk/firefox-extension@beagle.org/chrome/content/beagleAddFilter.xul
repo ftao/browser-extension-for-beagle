@@ -8,7 +8,7 @@
 <dialog id="beagle.addPattern"
   buttons="accept,cancel"
   buttonlabelaccept="Add"
-  title="Add Pattern"
+  title="Add Rule"
   ondialogaccept="beaglePrefsAddFilterClicked();"
   xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul">
   
