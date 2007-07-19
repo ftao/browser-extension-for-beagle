@@ -11,10 +11,11 @@
     <em:description>
       Index webpages you visit using Beagle.
     </em:description>
-    <em:creator>Tao Fei</em:creator>
+    <em:creator>Tao Fei (Filia.Tao@gmail.com) </em:creator>
+    <em:contributor>Alex Graveley  (Original Code)</em:contributor>
+    <em:contributor>Abby Coffin (Icon Design)</em:contributor>
     <em:homepageURL>http://beagle-project.org</em:homepageURL>
     <em:iconURL>chrome://newbeagle/skin/beagle-big.png</em:iconURL>
-    <em:aboutURL>chrome://newbeagle/content/about.xul</em:aboutURL>
     <em:optionsURL>chrome://newbeagle/content/beaglePrefs.xul</em:optionsURL>
 
     <em:targetApplication>

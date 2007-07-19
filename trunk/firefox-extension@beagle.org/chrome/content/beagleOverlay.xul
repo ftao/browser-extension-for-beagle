@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 
-<?xml-stylesheet href="chrome://newbeagle/content/beagleOverlay.css" type="text/css"?>
+<?xml-stylesheet href="chrome://newbeagle/skin/overlay.css" type="text/css"?>
 <!DOCTYPE overlay SYSTEM "chrome://newbeagle/locale/beagle.dtd">
 
 <overlay id="BeagleOverlay"
