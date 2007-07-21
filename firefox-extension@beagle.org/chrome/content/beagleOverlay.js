@@ -45,6 +45,26 @@ var beagle = {
         return document.getElementById('beagle-notifier-status');
     },
     
+    dataPath : null,
+    
+    /**
+    the path to beagle search ,it is used for search (for link/page/text)
+    */
+    get beagleSearchPath() { 
+        var path = this.ENV.get("PATH");
+        if (path) {
+            var split = path.split(':');
+            var idx = 0;
+            while (idx < split.length) 
+            {
+                var trypath = split[idx++] + '/' + "beagle-search";
+                if (this.FILE_UTILS.exists(trypath))
+                    return trypath;
+            }
+        }
+        return undefined;
+    },
+
     getContentPath: function(url)
     {
         var hash = hex_md5(url);
@@ -75,7 +95,7 @@ var beagle = {
         }
         else
         {
-            if(this.pref.load()['beagle.enable'])
+            if(this.pref.get('beagle.enable'))
             {
                 this.enable();
             }
@@ -119,9 +139,11 @@ var beagle = {
         if(e.originalTarget.id != "contentAreaContextMenu")
             return;
         //dump("[beagle] gContextMenu " + gContextMenu + "\n");
-        gContextMenu.showItem("context-index-this-link", gContextMenu.onLink && !gContextMenu.onMailtoLink); 
-        gContextMenu.showItem("context-index-this-image", gContextMenu.onImage && gContextMenu.onLoadedImage); 
-        //gContextMenu.showItem("context-index-this", ); 
+        gContextMenu.showItem("beagle-context-index-this-link", gContextMenu.onLink && !gContextMenu.onMailtoLink); 
+        gContextMenu.showItem("beagle-context-index-this-image", gContextMenu.onImage && gContextMenu.onLoadedImage); 
+        gContextMenu.showItem("beagle-context-search-link", gContextMenu.onLink); 
+        gContextMenu.showItem("beagle-context-search-text", gContextMenu.isTextSelected);
+        document.getElementById("beagle-context-search-text").setAttribute("label",_f("beagle_context_search_text",[getBrowserSelection(16)]));
     },
 
     checkEnv : function()
@@ -381,42 +403,26 @@ var beagle = {
     disable : function()
     {
         this.runStatus = this.RUN_DISABLED;
-        
-         
         this.STATUS_ICON.setAttribute("status","00f");
         this.STATUS_ICON.setAttribute("tooltiptext",_("beagle_tooltip_disabled"));
-
-        this.pref.load();
-        this.pref.prefObject["beagle.enabled"] = false;
-        this.pref.save();
+        this.pref.set("beagle.enabled",false);
 
     },
 
     enable : function()
     {
         this.runStatus = this.RUN_ENABLED;
-        
-        var icon = document.getElementById('beagle-notifier-status');
         this.STATUS_ICON.setAttribute("status","000");
         this.STATUS_ICON.setAttribute("tooltiptext",_("beagle_tooltip_actived"));
-
-        this.pref.load();
-        this.pref.prefObject["beagle.enabled"] = true;
-        this.pref.save();
-
+        this.pref.set("beagle.enabled",true);
     },
 
     error : function(msg)
     {
-        var icon = document.getElementById('beagle-notifier-status');
+        this.runStatus = this.RUN_ERROR;
         this.STATUS_ICON.setAttribute("status","f00");
         this.STATUS_ICON.setAttribute("tooltiptext",_f("beagle_tooltip_error",[msg]));
-
-        this.pref.load();
-        this.pref.prefObject["beagle.enabled"] = false;
-        this.pref.save();
-
-        this.runStatus = this.RUN_ERROR;
+        this.pref.set("beagle.enabled",false);
     },
 
     quickAddRule : function (page,flag)
@@ -458,6 +464,23 @@ var beagle = {
                 alert("Error running Beagle Indexer: " + this.RunStatus);
                 break;
             }
+        }
+    },
+    /**
+    call beagle search by query 
+    */
+    search : function(query)
+    {
+        if(!this.beagleSearchPath)
+            return;
+        try {
+            dump("Running beagle search with query: "+ query + "\n");
+            var retval = this.FILE_UTILS.spawn(this.beagleSearchPath, ["", query]);
+            if (retval) 
+                alert("Error running beagle search: " + retval);
+        } 
+        catch(e){
+                alert("Caught error from best: " + e);
         }
     },
 };
