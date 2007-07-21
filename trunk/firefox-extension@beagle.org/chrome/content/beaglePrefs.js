@@ -3,6 +3,10 @@
  * An Extension for the Firefox Browser.
  */
 
+// I hate global var , but I have to use it here.
+// Initiate a new preference instance.
+var gPrefService = Components.classes['@mozilla.org/preferences-service;1'].getService(Components.interfaces.nsIPrefBranch);
+
 var beaglePref = {
     
     //I use this value to check weather a file is a valid beagle preference file 
@@ -12,19 +16,62 @@ var beaglePref = {
     RULE_EXCLUDE : 2,
 
     // Declare Pref Keys and Type.
-    prefKeys : [ 
-      {'name':'beagle.security.active','type':'bool'},
-      {'name':'beagle.default.action','type':'int'},
-      {'name':'beagle.conflict.action','type':'int'},
-      {'name':'beagle.include.list','type':'string'},
-      {'name':'beagle.exclude.list','type':'string'},
-      {'name':'beagle.enabled','type':'bool'}
-    ],
+    prefKeys : { 
+      'beagle.security.active':{'type':'bool','default':false},
+      'beagle.default.action':{'type':'int','default':0},
+      'beagle.conflict.action':{'type':'int','default':0},
+      'beagle.include.list':{'type':'string','default':"[]"},
+      'beagle.exclude.list':{'type':'string','default':"[]"},
+      'beagle.enabled':{'type':'bool','default':true}
+    },
 
-    // Initiate a new preference instance.
-    prefService : Components.classes['@mozilla.org/preferences-service;1'].getService(Components.interfaces.nsIPrefBranch),
+   
+    //functions used to get/set pref
+    func_factory:{
+        'get':{
+            'bool': Function.bind(gPrefService.getBoolPref,gPrefService),
+            'int': Function.bind(gPrefService.getIntPref,gPrefService),
+            'string' : Function.bind(gPrefService.getCharPref,gPrefService)
+        },
+        'set':{
+            'bool': Function.bind(gPrefService.setBoolPref,gPrefService),
+            'int' : Function.bind(gPrefService.setIntPref,gPrefService),
+            'string' : Function.bind(gPrefService.setCharPref,gPrefService)
+        }
+    },
 
     prefObject : {},
+    
+    /**
+    get the pref value by key
+    we will use right type according to prefKeys
+    */
+    get : function(key)
+    {
+        if(!this.prefKeys.hasOwnProperty(key))
+            return null;
+        try{
+            return this.func_factory['get'][this.prefKeys[key]['type']].call(null,key);
+        }
+        catch(ex){
+            dump("[beaglPref.get " + key + "] " + ex + "\n");
+            return this.prefKeys[key]['default']; 
+        }
+    },
+
+    set : function(key,value)
+    {
+        if(!this.prefKeys.hasOwnProperty(key))
+            return false;
+        try{
+            this.func_factory['set'][this.prefKeys[key]['type']].call(null,key,value);
+            return true;
+        }
+        catch(ex){
+            return false; 
+        }
+        
+    },
 
     /*
      * Load Prefs into a javascript object
@@ -34,20 +81,13 @@ var beaglePref = {
     {
         //dump(this.prefKeys.toJSONString());
         
-        for(var j = 0 ; j < this.prefKeys.length; j++)
+        for(key in this.prefKeys)
         {
-            switch(this.prefKeys[j]['type'])
-            {
-            case 'bool':
-                this.prefObject[this.prefKeys[j]['name']] = this.prefService.getBoolPref(this.prefKeys[j]['name']);
-                break;
-            case 'string':
-                this.prefObject[this.prefKeys[j]['name']] = this.prefService.getCharPref(this.prefKeys[j]['name']);
-                break;
-            case 'int':
-                this.prefObject[this.prefKeys[j]['name']] = this.prefService.getIntPref(this.prefKeys[j]['name']);
-                break;
-            }
+            var value = this.get(key);
+            if(value != null)
+                this.prefObject[key] = value;
+            else
+                dump(key + "is null" + "\n");
         }
         return this.prefObject;
     },
@@ -57,31 +97,23 @@ var beaglePref = {
      */
     save : function()
     {
-        for(var j = 0; j< this.prefKeys.length; j++)
+        for(key in this.prefKeys)
         {
-            switch(this.prefKeys[j]['type'])
-            {
-            case 'bool':
-                this.prefService.setBoolPref(this.prefKeys[j]['name'], this.prefObject[this.prefKeys[j]['name']]);
-                break;
-            case 'string':
-                this.prefService.setCharPref(this.prefKeys[j]['name'], this.prefObject[this.prefKeys[j]['name']]);
-                break;
-            case 'int':
-                this.prefService.setIntPref(this.prefKeys[j]['name'], this.prefObject[this.prefKeys[j]['name']]);
-            }                
+            this.set(key, this.prefObject[key]);
         }
         //dump("Save Beagle Prefs:" + this.prefObject.toJSONString() + "\n");
     },
 
     init : function ()
     {
-       this.load(); 
-       this.UIInit();
+        dump("beaglePref init...............\n");
+        this.load(); 
+        this.UIInit();
     },
 
     UIInit : function ()
     {
+        dump("beaglePref uiinit...............\n");
         var checkboxElements = ["beagle.security.active"]
         for(var i = 0; i < checkboxElements.length; i++)
         {
@@ -90,6 +122,7 @@ var beaglePref = {
                 $(elementID).checked = this.prefObject[elementID]
              }
             catch(e){
+                dump(e + "\n");
                 $(elementID).checked = true;
              }
         }
@@ -110,6 +143,7 @@ var beaglePref = {
                 }
             }
             catch(e){
+                dump(e + "\n");
             }
         }
      
@@ -130,6 +164,8 @@ var beaglePref = {
                     listbox.appendRow(items[j]['name'],items[j]['pattern'],items[j]['patternType']);
                  }
             } catch(e) {
+                dump(e + "\n");
+                dump(this.prefObject[elementID] + "\n");
                 // We don't seem to care about this.
             }
         }
@@ -167,7 +203,7 @@ var beaglePref = {
              }
         }
              
-        //beagle.include.list
+        //beagle.include.list and beagle.exclude.list
         var listElementIDs = ["beagle.include.list","beagle.exclude.list"];
         for (var i = 0; i < listElementIDs.length; i++)
         {
@@ -222,7 +258,7 @@ var beaglePref = {
     /*
      * export current prefs into an file
      * It export the value that saved in firefox, not the value showed on the UI
-     * TODO: use more proper words
+     * TODO: choose the right logic
      */
     onExport : function()
     {
@@ -250,7 +286,7 @@ var beaglePref = {
     /*
      * import prefs from an file
      * UI will be updated. But the values will not be saved until save button is clicked. 
-     *
+     * TODO: choose the right logic 
      */
     onImport : function ()
     {
@@ -279,7 +315,13 @@ var beaglePref = {
         }
     },
 
-
+    /**
+    Add Exclude / Include rule
+    @arg name the rule name
+    @arg pattern the pattern
+    @arg type the pattern type 
+    @arg flag  RULE_INCLUDE or RULE_EXCLUDE
+    */
     addRule : function (name,pattern,type,flag)
     {
         this.load();
@@ -295,10 +337,9 @@ var beaglePref = {
             //error
             return;
         }
-        var rules = this.prefObject[key].parseJSON();
+        var rules = this.get(key).parseJSON();
         rules.push({"name":name,"pattern":pattern,"patternType":type});
-        this.prefObject[key] = rules.toJSONString();
-        this.save();
+        this.set(key,rules.toJSONString());
     },
 }
 

@@ -22,7 +22,10 @@ beagleInvisibleBrowser = {
     
     sniffer: null,
     
-
+    /**
+    init with url
+    sniff the contentType 
+    */
 	init : function(url)
 	{
         this.currentURL = url;
@@ -35,7 +38,10 @@ beagleInvisibleBrowser = {
         this.sniffer.httpHead();
         this.STATUS_ELEMENT.value = "Connecting... " + url;
     },
-    
+
+    /**
+    for non-html file . save it (to ~/.beagle/ToIndex)
+    */
     save : function(url,path)
     {
         var tmpfile = Components.classes["@mozilla.org/file/local;1"].createInstance(Components.interfaces.nsILocalFile);
@@ -56,9 +62,14 @@ beagleInvisibleBrowser = {
     
     },
 
+    /**
+    for html/xml file . load it  (and then index the DOM)
+    TODO: more thing can be just do once ? not every time
+    */
 	load : function(url)
 	{
-        this.currentURL = url
+        this.ELEMENT.webProgress.addProgressListener(this, Components.interfaces.nsIWebProgress.NOTIFY_ALL);
+        this.ELEMENT.addEventListener("load", Function.bind(this.doIndex,this), true);
 		this.ELEMENT.docShell.allowJavascript = true;
 		this.ELEMENT.docShell.allowImages     = false;
 		this.ELEMENT.docShell.allowMetaRedirects = false;
@@ -66,13 +77,20 @@ beagleInvisibleBrowser = {
 		this.ELEMENT.loadURI(url, null, null);
 	},
 
+    /**
+    called when the start button is clicked
+    TODO:shall we re-sniff when reload?
+    */
     reload : function()
     {
         this.START_BUTTON.disabled=true;
         this.STOP_BUTTON.disabled=false;
         this.init(this.currentURL);
     },
-    
+
+    /**
+    called when the stop button is clicked
+    */
     stop : function()
     {
         if(this.isDcoument)
@@ -81,6 +99,7 @@ beagleInvisibleBrowser = {
         {
             this.persist.progressListener =  null;
             this.persist.cancelSave();
+            //if we cancel save . It's our responsibility to clean the tmp file
             try{
                 var tmpfile = Components.classes["@mozilla.org/file/local;1"].createInstance(Components.interfaces.nsILocalFile);
                 tmpfile.initWithPath(window.opener.beagle.getContentPath(this.currentURL));
@@ -93,6 +112,9 @@ beagleInvisibleBrowser = {
 		this.STATUS_ELEMENT.value = _("beagle_index_link_stop");
     },
 
+    /**
+    call window.opener.beagle to index the file/document
+    */
 	doIndex : function()
 	{
 		this.STATUS_ELEMENT.value = _f("beagle_index_link_saving",[this.currentURL]);
@@ -137,6 +159,10 @@ beagleInvisibleBrowser = {
 	onStatusChange   : function() {},
 	onLocationChange : function() {},
 	onSecurityChange : function() {},
+    /**
+    pass it as a callback to sniffer
+    when we get the contentType , it is called.
+    */
     onGetContentType : function(contentType,url)
     {
         if(!contentType)
@@ -146,17 +172,18 @@ beagleInvisibleBrowser = {
         if(contentType.match(/(text|html|xml)/i))
         {   
             this.isDocument = true;
-		    this.ELEMENT.webProgress.addProgressListener(this, Components.interfaces.nsIWebProgress.NOTIFY_ALL);
-		    this.onload = function(){ beagleInvisibleBrowser.doIndex();};
- 	        this.ELEMENT.addEventListener("load", beagleInvisibleBrowser.onload, true);
             this.load(url);//?
         }
         else
         {
-            this.save(url,window.opener.beagle.getContentPath(url));
             this.isDocument = false;
+            this.save(url,window.opener.beagle.getContentPath(url));
         }
     },
+    /**
+    pass it as a callback to sniffer
+    when some error occurs, it is called
+    */
     onGetResponseError : function(msg)
     {
         this.STATUS_ELEMENT.value = msg;
@@ -166,7 +193,8 @@ beagleInvisibleBrowser = {
 
 
 /**
-get the mimetype of the given url
+sniff the head 
+here is used to get the mimetype of the given url
 */
 function headerSniffer(URLSpec, RefURLSpec,onSuccess,onError)
 {
@@ -217,7 +245,7 @@ headerSniffer.prototype = {
 	
     onDataAvailable : function() {},
 	onStartRequest  : function() {},
-	onStopRequest   : function(aRequest, aContext, aStatus) { this.onHttpSuccess(); },
+	onStopRequest   : function() { this.onHttpSuccess(); },
 
 	onHttpSuccess : function()
 	{
@@ -243,6 +271,7 @@ headerSniffer.prototype = {
 		}
         //contenType may looks like text/html; charset=UTF-8
         //we only need text/html
+        //TODO more test for this
         contentType = contentType.split(';',1)[0];
         dump("[beagle ] get contenttype = " + contentType + "\n");
         this.onSuccess(contentType,this.URLSpec);
@@ -254,5 +283,6 @@ headerSniffer.prototype = {
 
 window.onload = function()
 {
+    //window.arguments[0] is the url to load
     beagleInvisibleBrowser.init(window.arguments[0]);
 }

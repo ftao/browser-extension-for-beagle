@@ -39,7 +39,12 @@
         oncommand="beagle.indexLink(event.originalTarget)"/>
     <command id="IndexThisImageCmd" label="&beagle.run.index.image.label;" 
         oncommand="beagle.indexImage(event.originalTarget)"/>
-
+    <command id="SearchLinkCmd" label="&beagle.context.search.link.label;"
+        oncommand="beagle.search(gContextMenu.linkURL);"/>
+    <command id="SearchPageCmd" label="&beagle.context.search.page.label;"
+        oncommand="beagle.search(getWebNavigation().currentURI.spec);"/>
+    <command id="SearchTextCmd" 
+        oncommand="beagle.search(getBrowserSelection());"/>
 </commandset>
 
 <!-- toolbar is not necessary -->
@@ -66,9 +71,13 @@
     <menuseparator />
     <menu label="&beagle.run.context.menu.label;">
         <menupopup id="beagle-content-popup">
-            <menuitem  id="context-index-this-link" command="IndexThisLinkCmd"/>
-            <menuitem  id="context-index-this-image" command="IndexThisImageCmd"/>
-            <menuitem  id="context-index-this" command="IndexThisCmd"/>
+            <menuitem  id="beagle-context-index-this-link" command="IndexThisLinkCmd"/>
+            <menuitem  id="beagle-context-index-this-image" command="IndexThisImageCmd"/>
+            <menuitem  id="beagle-context-index-this" command="IndexThisCmd"/>
+            <menuseparator />
+            <menuitem id="beagle-context-search-link" command="SearchLinkCmd"/>
+            <menuitem id="beagle-context-search-text" command="SearchTextCmd"/>
+            <menuitem id="beagle-context-search-page" command="SearchPageCmd"/>
             <menuseparator />
             <menuitem command="AlwaysIndexThisSiteCmd"/> 
             <menuitem command="NeverIndexThisSiteCmd"/> 
