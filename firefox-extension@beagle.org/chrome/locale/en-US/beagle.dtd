@@ -24,6 +24,7 @@
 <!ENTITY beagle.pref.filter.remove.label            "Remove">
 <!ENTITY beagle.pref.export.label                   "Export">
 <!ENTITY beagle.pref.import.label                   "Import">
+<!ENTITY beagle.pref.importold.label                "Import From Old Extension">
 
 <!ENTITY beagle.run.index.this.label                "Index This Page">
 <!ENTITY beagle.run.always.index.label              "Always Index This Site">

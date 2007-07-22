@@ -169,6 +169,12 @@ var beaglePref = {
                 // We don't seem to care about this.
             }
         }
+        //if there are old extension's pref   enable the import-from-old button 
+        try{
+            if ( gPrefService.getCharPref("beagle.security.filters"))
+                document.getElementById('beagle.import.from.old').disabled = false;
+        }
+        catch(ex){}
      
     },
 
@@ -324,7 +330,6 @@ var beaglePref = {
     */
     addRule : function (name,pattern,type,flag)
     {
-        this.load();
         switch(flag)
         {
         case this.RULE_INCLUDE:
@@ -341,5 +346,24 @@ var beaglePref = {
         rules.push({"name":name,"pattern":pattern,"patternType":type});
         this.set(key,rules.toJSONString());
     },
+
+    /**
+    Import prefs from old extension.
+    */
+    onImportFromOld : function ()
+    {
+        //beagle.security.active, we use the same name , no import 
+        try{ 
+            //beagle.security.filters
+            var filters = gPrefService.getCharPref("beagle.security.filters").split(";");
+            var excludeList = document.getElementById('beagle.exclude.list');
+            for(var i = 0; i < filters.length; i++)
+            {
+            if(filters[i] != "")
+                excludeList.appendRow("Import_" + i, filters[i], "domain");
+            }
+        }
+        catch(ex){};
+    }
 }
 
