@@ -4,7 +4,7 @@ a browser used to download the link/image and index it
 
 beagleInvisibleBrowser = {
 
-	get ELEMENT() { return document.getElementById("beagle-invisible-browser"); },
+    get ELEMENT() { return document.getElementById("beagle-invisible-browser"); },
     
     get STATUS_ELEMENT() { return document.getElementById("beagle-index-link-status");},
     
@@ -21,6 +21,8 @@ beagleInvisibleBrowser = {
     onload : null,
     
     sniffer: null,
+    
+    persist : null, 
     
     /**
     init with url
@@ -93,10 +95,21 @@ beagleInvisibleBrowser = {
     */
     stop : function()
     {
-        if(this.isDcoument)
+        this.START_BUTTON.disabled=false;
+        this.STOP_BUTTON.disabled=true;
+		this.STATUS_ELEMENT.value = _("beagle_index_link_stop");
+        
+        if(this.currentContentType == null)  //not get contenttype yet
+        {
+            dump("beagle stop not get content type yet\n");   
+            this.sniffer.cancel();
+            return;
+        }
+        if(this.isDocument)
             this.ELEMENT.stop();
         else
         {
+            
             this.persist.progressListener =  null;
             this.persist.cancelSave();
             //if we cancel save . It's our responsibility to clean the tmp file
@@ -107,9 +120,7 @@ beagleInvisibleBrowser = {
             }
             catch(ex){ dump(ex + "\n");}
         }
-        this.START_BUTTON.disabled=false;
-        this.STOP_BUTTON.disabled=true;
-		this.STATUS_ELEMENT.value = _("beagle_index_link_stop");
+        this.currentContentType = null;
     },
 
     /**
@@ -233,6 +244,17 @@ headerSniffer.prototype = {
 		}
 	},
 
+    /**
+    cancel sniff 
+    I didn't find any way to stop the request ?
+    So here  we will just remove the callback function
+    */
+    cancel : function()
+    {
+        dump("[beagle] sniff canceled\n");
+        this.onSuccess =  function(){};
+        this.onError = function(){};
+    },
 	getHeader : function(header_name)
 	{
 	 	try { return this._channel.getResponseHeader(header_name); } catch(ex) { return ""; }
@@ -271,7 +293,6 @@ headerSniffer.prototype = {
 		}
         //contenType may looks like text/html; charset=UTF-8
         //we only need text/html
-        //TODO more test for this
         contentType = contentType.split(';',1)[0];
         dump("[beagle ] get contenttype = " + contentType + "\n");
         this.onSuccess(contentType,this.URLSpec);

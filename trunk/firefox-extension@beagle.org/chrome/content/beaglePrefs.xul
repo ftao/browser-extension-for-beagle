@@ -118,6 +118,7 @@
     <hbox>
     <button command="ExportCmd"/>
     <button command="ImportCmd"/>
+    <button id="beagle.import.from.old" command="ImportFromOldExtensionCmd" disabled="true"/>
     </hbox>
 
     <command id="AddIncludeFilterCmd" label="&beagle.pref.filter.add.label;" oncommand="beaglePref.onAddFilter('include')"/>
@@ -126,7 +127,7 @@
     <command id="RemoveExcludeFilterCmd" label="&beagle.pref.filter.remove.label;" oncommand="beaglePref.onRemoveFilter('exclude')"/>
     <command id="ExportCmd" label="&beagle.pref.export.label;" oncommand="beaglePref.onExport()"/>
     <command id="ImportCmd" label="&beagle.pref.import.label;" oncommand="beaglePref.onImport()"/>
-
+    <command id="ImportFromOldExtensionCmd" label="&beagle.pref.importold.label;" oncommand="beaglePref.onImportFromOld()"/>
 </dialog> 
 
 
