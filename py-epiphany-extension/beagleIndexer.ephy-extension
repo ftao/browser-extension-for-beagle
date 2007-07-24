@@ -1,0 +1,11 @@
+[Epiphany Extension]
+Name=Beagle Indexer
+Description=Index the pages you visited
+Authors=Tao Fei
+Version=1
+URL=http://no.url.yet/
+
+
+[Loader]
+Type=python
+Module=beagleIndexer
