@@ -36,9 +36,9 @@
     <command id="ShowPrefsCmd" label="&beagle.run.preferences.label;" 
             oncommand="beagle.showPrefs()"/>
     <command id="IndexThisLinkCmd" label="&beagle.run.index.link.label;" 
-        oncommand="beagle.indexLink(event.originalTarget)"/>
+        oncommand="beagle.indexLink()"/>
     <command id="IndexThisImageCmd" label="&beagle.run.index.image.label;" 
-        oncommand="beagle.indexImage(event.originalTarget)"/>
+        oncommand="beagle.indexImage()"/>
     <command id="SearchLinkCmd" label="&beagle.context.search.link.label;"
         oncommand="beagle.search(gContextMenu.linkURL);"/>
     <command id="SearchPageCmd" label="&beagle.context.search.page.label;"

@@ -21,24 +21,19 @@ var beagle = {
      *@see http://www.xulplanet.com/references/xpcomref/comps/c_embeddingbrowsernsWebBrowserPersist1.html
      */
     get PersistMask(){
-        if(this.PERSIST_MASK && this.PERSIST_MASK != undefined)
-            return this.PERSIST_MASK;
-        var comp = Components.classes["@mozilla.org/embedding/browser/nsWebBrowserPersist;1"];
-        this.PERSIST_MASK = (comp.PERSIST_FLAGS_FROM_CACHE | 
+        var comp = Components.classes["@mozilla.org/embedding/browser/nsWebBrowserPersist;1"].createInstance(Components.interfaces.nsIWebBrowserPersist);
+        var PERSIST_MASK = (comp.PERSIST_FLAGS_FROM_CACHE | 
                 comp.PERSIST_FLAGS_REPLACE_EXISTING_FILES |
                 comp.PERSIST_FLAGS_NO_BASE_TAG_MODIFICATIONS |
                 comp.PERSIST_FLAGS_DONT_FIXUP_LINKS |
                 comp.PERSIST_FLAGS_DONT_CHANGE_FILENAMES |
                 comp.PERSIST_FLAGS_CLEANUP_ON_FAILURE);
-        return this.PERSIST_MASK;
+        return PERSIST_MASK;
     },
 
     get EncodeMask(){
-        if(this.ENCODE_MASK != undefined)
-            return this.ENCODE_MASK;
-        var comp = Components.classes["@mozilla.org/embedding/browser/nsWebBrowserPersist;1"];
-        this.ENCODE_MASK = (comp.ENCODE_FLAGS_RAW | comp.ENCODE_FLAGS_ABSOLUTE_LINKS);
-        return this.ENOCDE_MASK;
+        var comp = Components.classes["@mozilla.org/embedding/browser/nsWebBrowserPersist;1"].createInstance(Components.interfaces.nsIWebBrowserPersist);
+        return (comp.ENCODE_FLAGS_RAW | comp.ENCODE_FLAGS_ABSOLUTE_LINKS);
     },
 
     get STATUS_ICON(){ 
@@ -253,7 +248,6 @@ var beagle = {
 
         var persist = Components.classes["@mozilla.org/embedding/browser/nsWebBrowserPersist;1"].createInstance(Components.interfaces.nsIWebBrowserPersist);
         persist.persistFlags = this.PersistMask;
-
         persist.saveDocument(page, tmpfile, null, null, this.EncodeMask, 0);
     },
 
@@ -287,11 +281,21 @@ var beagle = {
     */
     writeMetadata : function(page, tmpfilepath)
     {
+        var url = page.location.href;
         var meta = [
-            page.location.href,
+            url,
             'WebHistory',
             page.contentType,
-            "k:_uniddexed:encoding="+page.characterSet];
+            "k:_uniddexed:encoding="+page.characterSet,
+            ];
+        if(typeof page.referrer != "undefined" && page.referrer != "")
+        {
+            meta.push("k:referrer=" + page. referrer);
+        }
+        if(this.tasks[url] && this.tasks[url]['meta'])
+        {
+            meta = meta.concat(this.tasks[url]['meta'])
+        }
         beagle.writeRawMetadata(meta,tmpfilepath);
     },
 
@@ -355,6 +359,10 @@ var beagle = {
         var url = gContextMenu.linkURL; 
         if (!url)
             return;
+        dump("[beagle] add meta referrer " + gBrowser.currentURI.spec + "\n");
+        this.tasks[url] = {
+            meta:["k:referrer=" + gBrowser.currentURI.spec],
+        };
         window.openDialog("chrome://newbeagle/content/indexLink.xul",
             "","chrome,centerscreen,all,resizable,dialog=no",url);
     },
@@ -366,7 +374,10 @@ var beagle = {
             return;
         var url = image.src;
         this.tasks[url] = {
-            meta:["t:alttext="+(image.getAttribute('alt')?image.getAttribute('alt'):"")],
+            meta:[
+                "t:alttext="+(image.getAttribute('alt')?image.getAttribute('alt'):""),
+                "k:referrer="+gBrowser.currentURI.spec
+            ],
         };
         window.openDialog("chrome://newbeagle/content/indexLink.xul",
             "","chrome,centerscreen,all,resizable,dialog=no",url);
@@ -376,11 +387,11 @@ var beagle = {
     {
         if(contentType.match(/(text|html|xml)/i) && doc)// a document
         {
-            beagle.indexPage(doc);
+            this.indexPage(doc);
         }
         else
         {
-            beagle.indexFile(url,contentType);
+            this.indexFile(url,contentType);
         }
     },
 
