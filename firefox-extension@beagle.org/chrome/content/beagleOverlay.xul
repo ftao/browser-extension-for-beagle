@@ -12,6 +12,7 @@
 </stringbundleset>
 
 
+
 <!-- jslib sources used for executing beagle -->
 <script type="text/javascript" src="jslib/jslib.js"/>
 <script type="text/javascript" src="jslib/io/file.js"/>
@@ -25,6 +26,7 @@
 <script type="text/javascript" src="json.js" />
 <script type="text/javascript" src="beaglePrefs.js" />
 <script type="text/javascript" src="beagleOverlay.js" />
+<script type="text/javascript" src="indexBookmark.js" />
 
 <commandset id="mainCommandSet">
     <command id="IndexThisCmd" label="&beagle.run.index.this.label;" 
@@ -45,6 +47,12 @@
         oncommand="beagle.search(getWebNavigation().currentURI.spec);"/>
     <command id="SearchTextCmd" 
         oncommand="beagle.search(getBrowserSelection());"/>
+    <!--
+    <command id="IndexAllBookmarksCmd" label="&beagle.bookmark.index.all.label;"
+        oncommand="BookmarkIndexer.indexAll();"/>
+    -->
+    <command id="IndexModifiedBookmarkCmd" label="&beagle.bookmark.index.modified.label;"
+        oncommand="BookmarkIndexer.indexModified();"/>
 </commandset>
 
 <!-- toolbar is not necessary -->
@@ -66,6 +74,16 @@
     </toolbarbutton>
 </toolbarpalette>
 -->
+
+<!--  Add  Index Bookmark menuitem in Bookmarks Menu -->
+<!--  position=4 to place item after Bookmark Manager which is normally 3 with Firefox 1.5-->
+<menupopup id="menu_BookmarksPopup" contextmenu='bookmarks-context-menu'>
+    <menuitem id="BookmarkDD-context-menu"
+	position="4"
+	hidden="false"
+	command="IndexModifiedBookmarkCmd"/>
+</menupopup>
+
 
 <popup id="contentAreaContextMenu">
     <menuseparator />

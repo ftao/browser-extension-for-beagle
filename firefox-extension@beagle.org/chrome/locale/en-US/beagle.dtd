@@ -37,3 +37,6 @@
 <!ENTITY beagle.context.search.page.label           "Find References to this Page">
 <!ENTITY beagle.index.link.start.label              "Start">
 <!ENTITY beagle.index.link.stop.label               "Stop">
+
+<!ENTITY beagle.bookmark.index.modified.label       "Index The Modified Bookmarks">
+

@@ -18,11 +18,12 @@ var beaglePref = {
     // Declare Pref Keys and Type.
     prefKeys : { 
       'beagle.security.active':{'type':'bool','default':false},
-      'beagle.default.action':{'type':'int','default':0},
-      'beagle.conflict.action':{'type':'int','default':0},
+      'beagle.default.action':{'type':'int','default':1},
+      'beagle.conflict.action':{'type':'int','default':1},
       'beagle.include.list':{'type':'string','default':"[]"},
       'beagle.exclude.list':{'type':'string','default':"[]"},
-      'beagle.enabled':{'type':'bool','default':true}
+      'beagle.enabled':{'type':'bool','default':true},
+      'beagle.bookmark.last.indexed.date':{'type':'string','default':'0'},
     },
 
    
