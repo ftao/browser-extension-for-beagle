@@ -60,17 +60,21 @@ var beagle = {
         return undefined;
     },
 
-    getContentPath: function(url)
+    getContentPath: function(url,type)
     {
+        if(typeof type == "undefined")
+            type = "web";
         var hash = hex_md5(url);
-        return this.dataPath + "/firefox-beagle-" + hash;
+        return this.dataPath + "/firefox-beagle-"+ type + "-" + hash;
         
     },
 
-    getMetaPath: function(url)
+    getMetaPath: function(url,type)
     {
+        if(typeof type == "undefined")
+            type = "web";
         var hash = hex_md5(url);
-        return this.dataPath + "/.firefox-beagle-" + hash;
+        return this.dataPath + "/.firefox-beagle-"+ type + "-" + hash;
     },
 
     tasks: [],

@@ -27,22 +27,82 @@ import ConfigParser
 import re
 import string
 
+#The following code is about menu item 
+_ui_str = """
+<ui>
+ <menubar name="menubar">
+  <menu name="ToolsMenu" action="Tools">
+   <separator/>
+   <menu name="BeagleMenu" action="BeagleMenuAction">
+       <menuitem name="PyBeagleExtIndexThisPage"
+             action="PyBeagleExtIndexThisPageAction"/>
+       <menuitem name="PyBeagleExtEnabled"
+             action="PyBeagleExtEnabledAction"/>
+   </menu>
+   <separator/>
+  </menu>
+ </menubar>
+</ui>
+"""
+
+# we use window.get_active_tab(): we want the menu entries to reflect the active
+# tab, not necessarily the one which fired a signal.
+def _update_action(window):
+	index_this_page_action = window.get_ui_manager().get_action('/menubar/ToolsMenu/BeagleMenu/PyBeagleExtIndexThisPage')
+
+	tab = window.get_active_tab()
+
+	# Tab is None when a window is first opened
+	sensitive = (tab != None and tab.get_load_status() != True)
+	index_this_page_action.set_sensitive(sensitive)
+
+
+def _switch_page_cb(notebook, page, page_num, window):
+	_update_action(window)
+
+def _index_this_page_cb(action, window):
+    tab = window.get_active_tab()
+    embed = tab.get_embed()
+    index_embed(embed)
+
+def _toggle_enable_cb(action,window):
+    print "toggle enable"
+    action = window.get_ui_manager().get_action('/menubar/ToolsMenu/BeagleMenu/PyBeagleExtEnabled')
+    is_active = action.get_active()
+    if is_active:
+        config['Runtime/auto_index'] = '1'
+    else:
+        config['Runtime/auto_index'] = '0'
+
+    print is_active
+# This is to pass to gtk.ActionGroup.add_actions()
+_actions = [
+        ('BeagleMenuAction',None,'Beagle',None,None,None),
+        ('PyBeagleExtIndexThisPageAction', None,
+	     'Index This Page', None, None, _index_this_page_cb),
+	   ]
+_toggle_actions = [
+        ("PyBeagleExtEnabledAction",None,
+         "Enable Beagle",None,None,_toggle_enable_cb)
+]
+
 beagle_data_path = os.environ["HOME"] + "/.beagle/ToIndex/"
 config_file_path = os.environ["HOME"] + "/.gnome2/epiphany/extensions/data/beagle/config.ini"
 blacklist_file_path = os.environ["HOME"] + "/.gnome2/epiphany/extensions/data/beagle/blacklist.txt"
-whiltelist_file_path = os.environ["HOME"] + "/.gnome2/epiphany/extensions/data/beagle/whitelist.txt"
+whitelist_file_path = os.environ["HOME"] + "/.gnome2/epiphany/extensions/data/beagle/whitelist.txt"
 
 _ConfigDefault = {
     'Basic/index_https':'0',
     'Basic/default_action':'INDEX',
-    'Basic/conflic_action':'NOINDEX'
+    'Basic/conflict_action':'NOINDEX',
+    'Runtime/auto_index':'0'
 }
 
 def LoadConfig(file, config={}):
-    """
+    '''
     returns a dictionary with key's of the form
     <section>.<option> and the values 
-    """
+    '''
     config = config.copy()
     cp = ConfigParser.ConfigParser()
     cp.read(file)
@@ -61,37 +121,33 @@ except Exception,e:
 
 print blacklist
 
-def load_status_cb(tab,event):
-    #dir_all(tab)
+try:
+    whitelist = [item[0:-1] for item in file(whitelist_file_path,'r').readlines()]
+except Exception,e:
+    print e
+    whitelist = []
+
+
+def load_status_cb(tab,event,window):
+    '''
+    Callback for load_status chanage
+    the load_status == false means the page is loaded.
+    So we will do our work
+    '''
+    print "update action "
+    _update_action(window)
     print "python-beagle"
-    if tab != None and tab.get_load_status() == False:
+    if config['Runtime/auto_index'] != '1':
+        print "Beagle Disabled. No index "
+        return
+    if tab != None and tab.get_load_status() != True:
         embed = tab.get_embed()
         url = embed.get_location(True)
         if should_index(url) == False:
             print url + " will NOT be indexed.\n"
             return
         print "beagle will index " +  url
-        md5_hash = md5.new(url).hexdigest() 
-        beagle_content_path = beagle_data_path + "epiphany-" + md5_hash + ".htm"
-        beagle_meta_path = beagle_data_path + ".epiphany-" + md5_hash + ".htm"
-        #write the content
-        persist = epiphany.ephy_embed_factory_new_object("EphyEmbedPersist")
-        persist.set_embed(embed)
-        persist.set_dest(beagle_content_path)
-        persist.set_flags(epiphany.EMBED_PERSIST_NO_VIEW 
-                        |epiphany.EMBED_PERSIST_COPY_PAGE 
-                        |epiphany.EMBED_PERSIST_MAINDOC
-                        |epiphany.EMBED_PERSIST_FROM_CACHE)
-
-        persist.save()
-
-        #write the meta
-        meta_file = open(beagle_meta_path,'w')
-        meta_file.write(url + '\n')
-        meta_file.write("WebHistory\n")
-        meta_file.write("text/html\n")
-        meta_file.write("k:_uniddexed:encoding="+embed.get_encoding() + "\n")
-        meta_file.close()
+        index_embed(embed)
         #print tab.get_document_type()
         #statusbar = window.get
         #context_id = statusbar.get_context_id("beagle")
@@ -100,7 +156,7 @@ def load_status_cb(tab,event):
 
 def should_index(url):
     url = url.lower()
-    if config['Basic.index_https'] == '0' and url.find("https") == 0:
+    if config['Basic/index_https'] == '0' and url.find("https") == 0:
         return False
     in_blacklist = False
     for item in blacklist:
@@ -115,10 +171,66 @@ def should_index(url):
     if (not in_blacklist) and (not in_whitelist):
         return config['Basic/conflict_action'] == 'INDEX'
     return in_whitelist
-    
+
+def index_embed(embed):
+    url = embed.get_location(True)
+    print "beagle index embed" + url
+    md5_hash = md5.new(url).hexdigest() 
+    beagle_content_path = beagle_data_path + "epiphany-" + md5_hash + ".htm"
+    beagle_meta_path = beagle_data_path + ".epiphany-" + md5_hash + ".htm"
+    write_content(embed,beagle_content_path)
+    write_meta(embed,beagle_meta_path)
+
+def write_content(embed,path):
+    persist = epiphany.ephy_embed_factory_new_object("EphyEmbedPersist")
+    persist.set_embed(embed)
+    persist.set_dest(path)
+    persist.set_flags(epiphany.EMBED_PERSIST_NO_VIEW 
+                    |epiphany.EMBED_PERSIST_COPY_PAGE 
+                    |epiphany.EMBED_PERSIST_MAINDOC
+                    |epiphany.EMBED_PERSIST_FROM_CACHE)
+
+    persist.save()
+
+def write_meta(embed,path):
+    url = embed.get_location(True)
+    meta_file = open(path,'w')
+    meta_file.write(url + '\n')
+    meta_file.write("WebHistory\n")
+    meta_file.write("text/html\n")
+    meta_file.write("k:_uniddexed:encoding="+embed.get_encoding() + "\n")
+    meta_file.close()
+ 
+def attach_window(window):
+    ui_manager = window.get_ui_manager()
+    group = gtk.ActionGroup('PyBeagleExt')
+    group.add_actions(_actions, window)
+    group.add_toggle_actions(_toggle_actions, window)
+    #action = group.get_action("PyBeagleExtEnabledAction")
+    #action.set_menu_item_type(gtk.CheckMenuItem)
+    ui_manager.insert_action_group(group, -1)
+    ui_id = ui_manager.add_ui_from_string(_ui_str)
+    window._py_beagle_window_data = (group, ui_id)
+    notebook = window.get_notebook()
+    sig = notebook.connect('switch_page', _switch_page_cb, window)
+    notebook._py_beagle_sig = sig
+
+def detach_window(window):
+    notebook = window.get_notebook()
+    notebook.disconnect(notebook._py_beagle_sig)
+    del notebook._py_beagle_sig
+
+    group, ui_id = window._py_beagle_window_data
+    del window._py_beagle_window_data
+
+    ui_manager = window.get_ui_manager()
+    ui_manager.remove_ui(ui_id)
+    ui_manager.remove_action_group(group)
+    ui_manager.ensure_update()
+
 
 def attach_tab(window,tab):
-    sig = tab.connect("notify::load-status",load_status_cb)
+    sig = tab.connect("notify::load-status",load_status_cb,window)
     tab._python_load_status_sig = sig
 
 def detach_tab(window,tab):
