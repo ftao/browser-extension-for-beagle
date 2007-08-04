@@ -20,8 +20,8 @@
 <script type="text/javascript" src="jslib/io/dir.js"/>
 <script type="text/javascript" src="jslib/io/dirUtils.js"/>
 
-<script type="text/javascript" src="i18n.js"/>
 <script type="text/javascript" src="utils.js" />
+<script type="text/javascript" src="i18n.js"/>
 <script type="text/javascript" src="md5.js" />
 <script type="text/javascript" src="json.js" />
 <script type="text/javascript" src="beaglePrefs.js" />
@@ -78,9 +78,8 @@
 <!--  Add  Index Bookmark menuitem in Bookmarks Menu -->
 <!--  position=4 to place item after Bookmark Manager which is normally 3 with Firefox 1.5-->
 <menupopup id="menu_BookmarksPopup" contextmenu='bookmarks-context-menu'>
-    <menuitem id="BookmarkDD-context-menu"
-	position="4"
-	hidden="false"
+    <menuitem id="beagle-index-modified-bookmarks"
+	hidden="true"
 	command="IndexModifiedBookmarkCmd"/>
 </menupopup>
 

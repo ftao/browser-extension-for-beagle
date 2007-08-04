@@ -47,6 +47,11 @@
           label="&beagle.pref.security.active.label;"
           type="checkbox" 
           />
+        <checkbox 
+          id="beagle.bookmark.active" 
+          label="&beagle.pref.bookmark.active.label;"
+          type="checkbox" 
+          />
         <hbox>
             <label tooltiptext="&beagle.pref.default.action.tooltip;">&beagle.pref.default.action.label;:</label>
             <radiogroup id="beagle.default.action" orient="horizontal">

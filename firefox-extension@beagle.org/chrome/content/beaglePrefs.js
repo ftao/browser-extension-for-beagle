@@ -23,6 +23,7 @@ var beaglePref = {
       'beagle.include.list':{'type':'string','default':"[]"},
       'beagle.exclude.list':{'type':'string','default':"[]"},
       'beagle.enabled':{'type':'bool','default':true},
+      'beagle.bookmark.active':{'type':'bool','default':false},
       'beagle.bookmark.last.indexed.date':{'type':'string','default':'0'},
     },
 
@@ -55,7 +56,7 @@ var beaglePref = {
             return this.func_factory['get'][this.prefKeys[key]['type']].call(null,key);
         }
         catch(ex){
-            dump("[beaglPref.get " + key + "] " + ex + "\n");
+            log("[beaglPref.get " + key + "] " + ex );
             return this.prefKeys[key]['default']; 
         }
     },
@@ -80,7 +81,7 @@ var beaglePref = {
      */
     load : function()
     {
-        //dump(this.prefKeys.toJSONString());
+        //log(this.prefKeys.toJSONString());
         
         for(key in this.prefKeys)
         {
@@ -88,7 +89,7 @@ var beaglePref = {
             if(value != null)
                 this.prefObject[key] = value;
             else
-                dump(key + "is null" + "\n");
+                log(key + "is null" );
         }
         return this.prefObject;
     },
@@ -102,28 +103,28 @@ var beaglePref = {
         {
             this.set(key, this.prefObject[key]);
         }
-        //dump("Save Beagle Prefs:" + this.prefObject.toJSONString() + "\n");
+        //log("Save Beagle Prefs:" + this.prefObject.toJSONString() );
     },
 
     init : function ()
     {
-        dump("beaglePref init...............\n");
+        log("beaglePref init");
         this.load(); 
         this.UIInit();
     },
 
     UIInit : function ()
     {
-        dump("beaglePref uiinit...............\n");
-        var checkboxElements = ["beagle.security.active"]
+        log("beaglePref uiinit");
+        var checkboxElements = ["beagle.security.active","beagle.bookmark.active"]
         for(var i = 0; i < checkboxElements.length; i++)
         {
             var elementID = checkboxElements[i];
             try{
                 $(elementID).checked = this.prefObject[elementID]
              }
-            catch(e){
-                dump(e + "\n");
+            catch(ex){
+                log(ex);
                 $(elementID).checked = true;
              }
         }
@@ -143,8 +144,8 @@ var beaglePref = {
                     }
                 }
             }
-            catch(e){
-                dump(e + "\n");
+            catch(ex){
+                log(ex);
             }
         }
      
@@ -156,7 +157,7 @@ var beaglePref = {
             try{
                 var items = this.prefObject[elementID].parseJSON(); 
                 var listbox = $(elementID) ;
-                //dump("listbox.getRowCount:" + listbox.getRowCount() + '\n');
+                //log("listbox.getRowCount:" + listbox.getRowCount() + '\n');
                 var num = listbox.getRowCount();
                 for (var j = 0; j < num; j++)
                     listbox.removeItemAt(0);
@@ -164,10 +165,9 @@ var beaglePref = {
                 for (var j = 0; j < items.length; j++){
                     listbox.appendRow(items[j]['name'],items[j]['pattern'],items[j]['patternType']);
                  }
-            } catch(e) {
-                dump(e + "\n");
-                dump(this.prefObject[elementID] + "\n");
-                // We don't seem to care about this.
+            } catch(ex) {
+                log(ex);
+                log(this.prefObject[elementID]);
             }
         }
         //if there are old extension's pref   enable the import-from-old button 
@@ -175,7 +175,9 @@ var beaglePref = {
             if ( gPrefService.getCharPref("beagle.security.filters"))
                 document.getElementById('beagle.import.from.old').disabled = false;
         }
-        catch(ex){}
+        catch(ex){
+            log(ex);
+        }
      
     },
 
@@ -187,7 +189,7 @@ var beaglePref = {
     {
         var prefs = {};
         
-        var checkboxElements = ["beagle.security.active","beagle.context.active"]
+        var checkboxElements = ["beagle.security.active","beagle.bookmark.active"]
         for(var i = 0; i < checkboxElements.length; i++)
         {
             var elementID = checkboxElements[i];
@@ -227,7 +229,6 @@ var beaglePref = {
                     items.push({'name':name,'pattern':pattern,'patternType':patternType});
                 }
                 var value = items.toJSONString();
-                //dump(value)
                 prefs[elementID] = value;
             } catch(e) {
                 // We don't seem to care about this.
