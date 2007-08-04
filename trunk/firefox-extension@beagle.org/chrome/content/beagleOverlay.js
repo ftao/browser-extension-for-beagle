@@ -22,13 +22,12 @@ var beagle = {
      */
     get PersistMask(){
         var comp = Components.classes["@mozilla.org/embedding/browser/nsWebBrowserPersist;1"].createInstance(Components.interfaces.nsIWebBrowserPersist);
-        var PERSIST_MASK = (comp.PERSIST_FLAGS_FROM_CACHE | 
+        return (comp.PERSIST_FLAGS_FROM_CACHE | 
                 comp.PERSIST_FLAGS_REPLACE_EXISTING_FILES |
                 comp.PERSIST_FLAGS_NO_BASE_TAG_MODIFICATIONS |
                 comp.PERSIST_FLAGS_DONT_FIXUP_LINKS |
                 comp.PERSIST_FLAGS_DONT_CHANGE_FILENAMES |
                 comp.PERSIST_FLAGS_CLEANUP_ON_FAILURE);
-        return PERSIST_MASK;
     },
 
     get EncodeMask(){
@@ -86,7 +85,7 @@ var beagle = {
      */
     init : function()
     {
-        dump("beagle init ");
+        log("init");
         if(!this.checkEnv())
         {
             this.runStatus = this.RUN_BEAGLE_NOT_FOUND;
@@ -124,6 +123,14 @@ var beagle = {
                 Function.bind(this.initContextMenu,this), 
                 false
             );
+            document.getElementById("menu_BookmarksPopup").addEventListener(
+                "popupshowing",
+                function ()
+                {
+                    document.getElementById("beagle-index-modified-bookmarks").hidden = ! beaglePref.get("beagle.bookmark.active");
+                },
+                false
+            )
         }
         this.STATUS_ICON.addEventListener(
             'click',
@@ -137,12 +144,13 @@ var beagle = {
     {
         if(e.originalTarget.id != "contentAreaContextMenu")
             return;
-        //dump("[beagle] gContextMenu " + gContextMenu + "\n");
+        //log(" gContextMenu " + gContextMenu );
         gContextMenu.showItem("beagle-context-index-this-link", gContextMenu.onLink && !gContextMenu.onMailtoLink); 
         gContextMenu.showItem("beagle-context-index-this-image", gContextMenu.onImage && gContextMenu.onLoadedImage); 
         gContextMenu.showItem("beagle-context-search-link", gContextMenu.onLink); 
         gContextMenu.showItem("beagle-context-search-text", gContextMenu.isTextSelected);
-        document.getElementById("beagle-context-search-text").setAttribute("label",_f("beagle_context_search_text",[getBrowserSelection(16)]));
+        document.getElementById("beagle-context-search-text").setAttribute("label",
+            _f("beagle_context_search_text",[getBrowserSelection(16)]));
     },
 
     checkEnv : function()
@@ -163,7 +171,7 @@ var beagle = {
     {
         if (!page)
         {
-            dump("[beagle checkPage ] the page doesn't seems to be a page\n");
+            log("[checkPage the page doesn't seems to be a page");
             return false;
         } 
         if (!page.location ||
@@ -171,7 +179,7 @@ var beagle = {
             page.location.href.indexOf("about:") == 0 ||
             page.location.href.indexOf("file:") == 0 )
         {
-            dump("[beagle checkPage ] strage page " + page + "\n");
+            log("checkPage  strage page " + page );
             return false;
         }
         return true;
@@ -214,7 +222,7 @@ var beagle = {
                     if (pattern[0] != '.')
                         pattern = "." + pattern;
                     flag = hostname.isEndWith(pattern) || (hostname == list[i]['pattern']);
-                    dump("[beagle check domain] is " + hostname + " end with " + pattern +" ? " + flag + "\n");
+                    //log("[check domain] is " + hostname + " end with " + pattern +" ? " + flag );
                     break;
                 case 'wildcard':
                     var re =  RegExp(list[i]['pattern'].wilcard2RE());
@@ -231,7 +239,7 @@ var beagle = {
             }
             flags[j] = flag;
         }
-        dump("[beagle] [Should Index ? ] [exclude = "+flags[0] + "] [include = " + flags[1] + "]\n");
+        log("[Should Index ? ] [exclude = "+flags[0] + "] [include = " + flags[1] + "]");
         if(!flags[0] && !flags[1])
             return prefObject['beagle.default.action'] == 1;
         if(flags[0] && flags[1])
@@ -268,11 +276,11 @@ var beagle = {
         stream.init(tmpfile, 0x04 | 0x08 | 0x20, 0600, 0);
 
         var line;
-        dump("metas dumping \n");
+        log("writing metas ");
         for(var i = 0; i < meta.length; i++)
         {
             line = meta[i] + "\n";
-            dump(line);
+            log(meta[i]);
             stream.write(line, line.length);
         }
         stream.flush();
@@ -317,7 +325,7 @@ var beagle = {
         if(!this.checkPage(page))
             return;
 
-        dump("[beagle] We will index " + page.location.href + '\n'); 
+        log(" We will index " + page.location.href ); 
         
         //save file content and metadats
         var tmpdatapath = this.getContentPath(page.location.href);
@@ -327,9 +335,9 @@ var beagle = {
             this.writeContent(page, tmpdatapath);
             this.writeMetadata(page, tmpmetapath);
         } catch (ex) {
-            dump ("beaglePageLoad: beagleWriteContent/Metadata failed: " + ex + "\n");
-            //if(confirm("Fail to write content/metadata ! \n Would you like to disable beagle now ?"))
-            //    this.disable();
+            log ("beaglePageLoad: beagleWriteContent/Metadata failed: " + ex );
+            if(confirm(_('beagle_write_error_confirm')))
+                this.disable();
             return;
         }
         this.setStatusLabel(_f("beagle_statuslabel_indexing",[page.location]));
@@ -339,7 +347,7 @@ var beagle = {
     indexFile : function(url,contentType)
     {
 
-        dump("[beagle] We will index " + url + '\n'); 
+        log(" We will index " + url ); 
         
         var tmpmetapath = this.getMetaPath(url);
         var meta = [url,'WebHistory',contentType];
@@ -350,7 +358,10 @@ var beagle = {
         try {
             this.writeRawMetadata(meta, tmpmetapath);
         } catch (ex) {
-            dump ("beagleIndexFile: beage write Metadata failed: " + ex + "\n");
+            log ("[indexFile] beage write Metadata failed: " + ex + "\n");
+            if(confirm(_('beagle_write_error_confirm')))
+                this.disable();
+            return;
             //    this.disable();
             return;
         }
@@ -363,7 +374,7 @@ var beagle = {
         var url = gContextMenu.linkURL; 
         if (!url)
             return;
-        dump("[beagle] add meta referrer " + gBrowser.currentURI.spec + "\n");
+        //log("add meta referrer " + gBrowser.currentURI.spec );
         this.tasks[url] = {
             meta:["k:referrer=" + gBrowser.currentURI.spec],
         };
@@ -401,11 +412,11 @@ var beagle = {
 
     onPageLoad : function(event)
     { 
-        dump("[beagle] Page Loaded \n");
+        log("Page Loaded ");
         //if disabled or error
         if(this.runStatus != this.RUN_ENABLED)
         {
-            dump("[beagle ] NOT RUN_ENABLED status .  NO INDEX\n");
+            log(" NOT RUN_ENABLED status .  NO INDEX");
             return;
         }
 
@@ -489,13 +500,13 @@ var beagle = {
         if(!this.beagleSearchPath)
             return;
         try {
-            dump("Running beagle search with query: "+ query + "\n");
+            log("Running beagle search with query: "+ query );
             var retval = this.FILE_UTILS.spawn(this.beagleSearchPath, ["", query]);
             if (retval) 
                 alert("Error running beagle search: " + retval);
         } 
         catch(e){
-                alert("Caught error from best: " + e);
+                alert("Caught error from beagle-search: " + e);
         }
     },
 };

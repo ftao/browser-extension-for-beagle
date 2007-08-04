@@ -101,7 +101,7 @@ beagleInvisibleBrowser = {
         
         if(this.currentContentType == null)  //not get contenttype yet
         {
-            dump("beagle stop not get content type yet\n");   
+            log("stop not get content type yet");   
             this.sniffer.cancel();
             return;
         }
@@ -118,7 +118,7 @@ beagleInvisibleBrowser = {
                 tmpfile.initWithPath(window.opener.beagle.getContentPath(this.currentURL));
                 tmpfile.remove(false);
             }
-            catch(ex){ dump(ex + "\n");}
+            catch(ex){ log(ex);}
         }
         this.currentContentType = null;
     },
@@ -251,7 +251,7 @@ headerSniffer.prototype = {
     */
     cancel : function()
     {
-        dump("[beagle] sniff canceled\n");
+        log("sniff canceled");
         this.onSuccess =  function(){};
         this.onError = function(){};
     },
@@ -294,7 +294,7 @@ headerSniffer.prototype = {
         //contenType may looks like text/html; charset=UTF-8
         //we only need text/html
         contentType = contentType.split(';',1)[0];
-        dump("[beagle ] get contenttype = " + contentType + "\n");
+        log("get contenttype = " + contentType);
         this.onSuccess(contentType,this.URLSpec);
         
 	},

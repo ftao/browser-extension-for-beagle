@@ -26,6 +26,52 @@ import os
 import ConfigParser
 import re
 import string
+import sys
+
+#The following is about config
+
+#TODO: is it needed ?
+Module = type(sys)
+modules = {}
+def load(fullpath, default={}, module=Module):
+      try:
+          code = open(fullpath).read()
+      except IOError:
+          return
+          #raise ImportError, 'No module named  %s' %fullpath
+
+      filename = os.path.basename(fullpath)
+
+      try:
+          return modules[filename]
+      except KeyError:
+          pass
+
+      m = module(filename)
+      m.__module_class__ = module
+      m.__file__ = fullpath
+      exec compile(code, filename, 'exec') in m.__dict__
+      for item in default.items():
+          m.__dict__.setdefault(item[0],item[1])
+
+      modules[filename] = m
+      return m
+
+#these are constant
+beagle_data_path = os.environ["HOME"] + "/.beagle/ToIndex/"
+config_file_path = os.environ["HOME"] + "/.gnome2/epiphany/extensions/beagleIndexer.conf"
+
+_ConfigDefault = {
+    'auto_index':True,
+    'index_https':False,
+    'default_index':True,
+    'white_list_first':True,
+    'white_list':[],
+    'black_list':[],
+}
+
+
+config = load(config_file_path,_ConfigDefault)
 
 #The following code is about menu item 
 _ui_str = """
@@ -36,8 +82,8 @@ _ui_str = """
    <menu name="BeagleMenu" action="BeagleMenuAction">
        <menuitem name="PyBeagleExtIndexThisPage"
              action="PyBeagleExtIndexThisPageAction"/>
-       <menuitem name="PyBeagleExtEnabled"
-             action="PyBeagleExtEnabledAction"/>
+       <menuitem name="PyBeagleExtAuto"
+             action="PyBeagleExtAutoAction"/>
    </menu>
    <separator/>
   </menu>
@@ -66,15 +112,10 @@ def _index_this_page_cb(action, window):
     index_embed(embed)
 
 def _toggle_enable_cb(action,window):
-    print "toggle enable"
-    action = window.get_ui_manager().get_action('/menubar/ToolsMenu/BeagleMenu/PyBeagleExtEnabled')
-    is_active = action.get_active()
-    if is_active:
-        config['Runtime/auto_index'] = '1'
-    else:
-        config['Runtime/auto_index'] = '0'
+    print "toggle auto index"
+    action = window.get_ui_manager().get_action('/menubar/ToolsMenu/BeagleMenu/PyBeagleExtAuto')
+    config.auto_index = action.get_active()
 
-    print is_active
 # This is to pass to gtk.ActionGroup.add_actions()
 _actions = [
         ('BeagleMenuAction',None,'Beagle',None,None,None),
@@ -82,63 +123,22 @@ _actions = [
 	     'Index This Page', None, None, _index_this_page_cb),
 	   ]
 _toggle_actions = [
-        ("PyBeagleExtEnabledAction",None,
-         "Enable Beagle",None,None,_toggle_enable_cb)
+        ("PyBeagleExtAutoAction",None,
+         "Auto Index",None,None,_toggle_enable_cb)
 ]
-
-beagle_data_path = os.environ["HOME"] + "/.beagle/ToIndex/"
-config_file_path = os.environ["HOME"] + "/.gnome2/epiphany/extensions/data/beagle/config.ini"
-blacklist_file_path = os.environ["HOME"] + "/.gnome2/epiphany/extensions/data/beagle/blacklist.txt"
-whitelist_file_path = os.environ["HOME"] + "/.gnome2/epiphany/extensions/data/beagle/whitelist.txt"
-
-_ConfigDefault = {
-    'Basic/index_https':'0',
-    'Basic/default_action':'INDEX',
-    'Basic/conflict_action':'NOINDEX',
-    'Runtime/auto_index':'0'
-}
-
-def LoadConfig(file, config={}):
-    '''
-    returns a dictionary with key's of the form
-    <section>.<option> and the values 
-    '''
-    config = config.copy()
-    cp = ConfigParser.ConfigParser()
-    cp.read(file)
-    for sec in cp.sections():
-        name = string.lower(sec)
-        for opt in cp.options(sec):
-            config[name + "/" + string.lower(opt)] = string.strip(cp.get(sec, opt))
-    return config
-
-config = LoadConfig(config_file_path,_ConfigDefault)
-try:
-    blacklist = [item[0:-1] for item in file(blacklist_file_path,'r').readlines()]
-except Exception,e:
-    print e
-    blacklist = []
-
-print blacklist
-
-try:
-    whitelist = [item[0:-1] for item in file(whitelist_file_path,'r').readlines()]
-except Exception,e:
-    print e
-    whitelist = []
 
 
 def load_status_cb(tab,event,window):
     '''
     Callback for load_status chanage
     the load_status == false means the page is loaded.
-    So we will do our work
+    So we will do our job 
     '''
+    print "beagle in load_status_cb"
     print "update action "
     _update_action(window)
-    print "python-beagle"
-    if config['Runtime/auto_index'] != '1':
-        print "Beagle Disabled. No index "
+    if not config.auto_index:
+        print "Auto Index is turned off. No index "
         return
     if tab != None and tab.get_load_status() != True:
         embed = tab.get_embed()
@@ -156,25 +156,25 @@ def load_status_cb(tab,event,window):
 
 def should_index(url):
     url = url.lower()
-    if config['Basic/index_https'] == '0' and url.find("https") == 0:
+    if not config.index_https and url.find("https") == 0:
         return False
     in_blacklist = False
-    for item in blacklist:
+    for item in config.black_list:
         if re.match(item,url):
             in_blacklist = True
     in_whitelist = False
-    for item in whitelist:
+    for item in config.white_list:
         if re.match(item,url):
             in_whitelist = True
     if in_blacklist and in_whitelist:
-        return config['Basic/default_action'] == 'INDEX'
+        return config.default_index
     if (not in_blacklist) and (not in_whitelist):
-        return config['Basic/conflict_action'] == 'INDEX'
+        return config.white_list_first
     return in_whitelist
 
 def index_embed(embed):
     url = embed.get_location(True)
-    print "beagle index embed" + url
+    print "beagle index embed " + url
     md5_hash = md5.new(url).hexdigest() 
     beagle_content_path = beagle_data_path + "epiphany-" + md5_hash + ".htm"
     beagle_meta_path = beagle_data_path + ".epiphany-" + md5_hash + ".htm"
@@ -206,14 +206,15 @@ def attach_window(window):
     group = gtk.ActionGroup('PyBeagleExt')
     group.add_actions(_actions, window)
     group.add_toggle_actions(_toggle_actions, window)
-    #action = group.get_action("PyBeagleExtEnabledAction")
-    #action.set_menu_item_type(gtk.CheckMenuItem)
     ui_manager.insert_action_group(group, -1)
     ui_id = ui_manager.add_ui_from_string(_ui_str)
     window._py_beagle_window_data = (group, ui_id)
     notebook = window.get_notebook()
     sig = notebook.connect('switch_page', _switch_page_cb, window)
     notebook._py_beagle_sig = sig
+    
+    auto_index_action = window.get_ui_manager().get_action('/menubar/ToolsMenu/BeagleMenu/PyBeagleExtAuto')
+    auto_index_action.set_active(config.auto_index)
 
 def detach_window(window):
     notebook = window.get_notebook()

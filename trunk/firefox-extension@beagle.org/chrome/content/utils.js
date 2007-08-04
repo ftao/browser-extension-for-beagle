@@ -55,3 +55,7 @@ Function.prototype.bind = function(f,obj) {
     return temp;
 }
 
+function log(msg)
+{
+   dump("[beagle] " + msg + "\n"); 
+}
