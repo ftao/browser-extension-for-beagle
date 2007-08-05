@@ -50,13 +50,18 @@ Bookmark.prototype = {
         var last_modified = this.LastModifiedDate;
         if (!last_modified)
             last_modified = this.BookmarkAddDate;
-        log("bookmark isModified " + last_modified  + " > " + lastIndexDate + "?");
+        //log("bookmark isModified " + last_modified  + " > " + lastIndexDate + "?");
         return last_modified && last_modified > lastIndexDate;
     },
 
     //TODO:is it ok?
     isBookmark: function()
     {
+        var parent = BMSVC.getParent(this.bmRes);
+        if (parent) 
+            var type = BookmarksUtils.resolveType(parent);
+        if (type == "Livemark") 
+            return false;
         return !!this.URL;
     },
     getLiteral:function(arc) 
@@ -82,7 +87,7 @@ Bookmark.prototype = {
 
 }
 
-var BookmarkIndexer = {
+var bookmarkIndexer = {
     
     //get the bookmark  one by one 
     //if filter(bookmark) == true do action(bookmark)
@@ -92,14 +97,18 @@ var BookmarkIndexer = {
         //BMDS : bookmarks data source 
         //@see chrome://browser/content/bookmarks/bookmarks.js
         var AllBookmarksResources = BMDS.GetAllResources();
-        
+        var num = 0; 
         while (AllBookmarksResources.hasMoreElements()) {
             var bmRes = AllBookmarksResources.getNext().QueryInterface(kRDFRSCIID);
             var bookmark = new Bookmark(bmRes);
             //log("beagle check bookmark " + bookmark );
             if(filter.call(null,bookmark))
+            {
                 action.call(null,bookmark);
+                num ++;
+            }
         }
+        return num;
     },
     /**
     Index a bookmark.
@@ -107,7 +116,7 @@ var BookmarkIndexer = {
     */
     indexBookmark: function(bookmark)
     {
-        log("index bookmark " + bookmark.URL + "\n");
+        log("index bookmark " + bookmark.URL );
         var meta = [
             bookmark.URL,
             "FirefoxBookmark",
@@ -141,14 +150,17 @@ var BookmarkIndexer = {
     /**
     Index the modifled (or new ) bookmarks.
     */
-    indexModified:function()
+    indexModified:function(report)
     {
         var lastIndexDate = beaglePref.get("beagle.bookmark.last.indexed.date");
-        this.walk(
+        var num = this.walk(
             function(bookmark){return bookmark.isBookmark() && bookmark.isModified(lastIndexDate);},
             this.indexBookmark
         );
         beaglePref.set("beagle.bookmark.last.indexed.date","" + (new Date()).getTime());
+        if(report)
+           alert(_f("beagle_index_bookmark_finish",[num]));
+        log(_f("beagle_index_bookmark_finish",[num]));
     }
 }
 

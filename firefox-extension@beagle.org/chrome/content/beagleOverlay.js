@@ -123,14 +123,29 @@ var beagle = {
                 Function.bind(this.initContextMenu,this), 
                 false
             );
-            document.getElementById("menu_BookmarksPopup").addEventListener(
-                "popupshowing",
-                function ()
-                {
-                    document.getElementById("beagle-index-modified-bookmarks").hidden = ! beaglePref.get("beagle.bookmark.active");
+        }
+        if(this.runStatus != this.RUN_BEAGLE_NOT_FOUND)
+        {
+            window.addEventListener(
+                "unload",
+                function(){
+                    if(beaglePref.get("beagle.bookmark.active"))
+                        bookmarkIndexer.indexModified(false);
                 },
                 false
-            )
+            );
+/*            var observerService =
+                 Components.classes["@mozilla.org/observer-service;1"]
+                    .getService(Components.interfaces.nsIObserverService)
+            var observer = {
+                observe: function(subject,topic,data){
+                    log("index bookmarks when exit");
+                    dump(bookmarkIndexer.indexModified());
+                    log(" done r");
+                }
+            };
+            observerService.addObserver(observer,"quit-application",false);
+*/
         }
         this.STATUS_ICON.addEventListener(
             'click',

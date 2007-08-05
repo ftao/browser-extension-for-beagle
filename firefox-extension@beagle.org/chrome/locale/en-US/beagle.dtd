@@ -7,7 +7,7 @@
 <!ENTITY beagle.pref.context.label                  "Context Menu Options">
 <!ENTITY beagle.pref.context.active.label           "Add Beagle options to context menu">
 <!ENTITY beagle.pref.security.active.label          "Index pages with secure content">
-<!ENTITY beagle.pref.bookmark.active.label          "Index bookmarks">
+<!ENTITY beagle.pref.bookmark.active.label          "Index bookmarks when close the window">
 <!ENTITY beagle.pref.default.action.label           "Default Action">
 <!ENTITY beagle.pref.default.action.tooltip         "What to do When the URL doesn't match any rule">
 <!ENTITY beagle.pref.conflict.action.label          "Conflict Action">

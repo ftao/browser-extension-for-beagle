@@ -26,12 +26,11 @@ import os
 import ConfigParser
 import re
 import string
-import sys
 
 #The following is about config
 
 #TODO: is it needed ?
-Module = type(sys)
+Module = type(os)
 modules = {}
 def load(fullpath, default={}, module=Module):
       try:
@@ -61,6 +60,7 @@ def load(fullpath, default={}, module=Module):
 beagle_data_path = os.environ["HOME"] + "/.beagle/ToIndex/"
 config_file_path = os.environ["HOME"] + "/.gnome2/epiphany/extensions/beagleIndexer.conf"
 
+#default config value
 _ConfigDefault = {
     'auto_index':True,
     'index_https':False,
@@ -70,7 +70,7 @@ _ConfigDefault = {
     'black_list':[],
 }
 
-
+#load config
 config = load(config_file_path,_ConfigDefault)
 
 #The following code is about menu item 
@@ -102,7 +102,7 @@ def _update_action(window):
 	sensitive = (tab != None and tab.get_load_status() != True)
 	index_this_page_action.set_sensitive(sensitive)
 
-
+#update the action (index this page ) when swith page 
 def _switch_page_cb(notebook, page, page_num, window):
 	_update_action(window)
 
@@ -110,8 +110,9 @@ def _index_this_page_cb(action, window):
     tab = window.get_active_tab()
     embed = tab.get_embed()
     index_embed(embed)
+    set_status_label(window,"beagle will index " + embed.get_location(True))
 
-def _toggle_enable_cb(action,window):
+def _toggle_auto_cb(action,window):
     print "toggle auto index"
     action = window.get_ui_manager().get_action('/menubar/ToolsMenu/BeagleMenu/PyBeagleExtAuto')
     config.auto_index = action.get_active()
@@ -124,8 +125,14 @@ _actions = [
 	   ]
 _toggle_actions = [
         ("PyBeagleExtAutoAction",None,
-         "Auto Index",None,None,_toggle_enable_cb)
+         "Auto Index",None,None,_toggle_auto_cb)
 ]
+
+def set_status_label(window,msg):
+    statusbar = window.get_statusbar()
+    context_id = statusbar.get_context_id("beagle")
+    statusbar.pop(context_id)
+    statusbar.push(context_id,msg)
 
 
 def load_status_cb(tab,event,window):
@@ -140,6 +147,7 @@ def load_status_cb(tab,event,window):
     if not config.auto_index:
         print "Auto Index is turned off. No index "
         return
+    #page is loaded  
     if tab != None and tab.get_load_status() != True:
         embed = tab.get_embed()
         url = embed.get_location(True)
@@ -148,11 +156,7 @@ def load_status_cb(tab,event,window):
             return
         print "beagle will index " +  url
         index_embed(embed)
-        #print tab.get_document_type()
-        #statusbar = window.get
-        #context_id = statusbar.get_context_id("beagle")
-        #statusbar.pop(context_id)
-        #statusbar.push(context_id,"beagle will index " + url)
+        set_status_label(window,"beagle will index " + url)
 
 def should_index(url):
     url = url.lower()
