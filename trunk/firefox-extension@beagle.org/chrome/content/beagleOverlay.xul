@@ -52,7 +52,7 @@
         oncommand="BookmarkIndexer.indexAll();"/>
     -->
     <command id="IndexModifiedBookmarkCmd" label="&beagle.bookmark.index.modified.label;"
-        oncommand="BookmarkIndexer.indexModified();"/>
+        oncommand="bookmarkIndexer.indexModified(true);"/>
 </commandset>
 
 <!-- toolbar is not necessary -->
@@ -79,7 +79,6 @@
 <!--  position=4 to place item after Bookmark Manager which is normally 3 with Firefox 1.5-->
 <menupopup id="menu_BookmarksPopup" contextmenu='bookmarks-context-menu'>
     <menuitem id="beagle-index-modified-bookmarks"
-	hidden="true"
 	command="IndexModifiedBookmarkCmd"/>
 </menupopup>
 
