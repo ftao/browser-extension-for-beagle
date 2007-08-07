@@ -23,7 +23,7 @@ if(!BMDS)
 }
 
 
-function Bookmark(bmRes)
+function Bookmark(bmRes,path)
 {
     this.bmRes = bmRes;
     this.URL = this.getLiteral(this.URLArc);
@@ -33,6 +33,8 @@ function Bookmark(bmRes)
     this.LastModifiedDate = this.getDate(this.LastModifiedDateArc);
     this.LastVisitDate = this.getDate(this.LastVisitDateArc);
     this.BookmarkAddDate = this.getDate(this.BookmarkAddDateArc);
+    this.type = BookmarksUtils.resolveType(this.bmRes);
+    this.path = path; 
 }
 
 Bookmark.prototype = {
@@ -53,7 +55,7 @@ Bookmark.prototype = {
         //log("bookmark isModified " + last_modified  + " > " + lastIndexDate + "?");
         return last_modified && last_modified > lastIndexDate;
     },
-
+    
     //TODO:is it ok?
     isBookmark: function()
     {
@@ -84,6 +86,19 @@ Bookmark.prototype = {
         } catch (e) { /* probably a bad interface */ }
         return null;
     },
+    getChildren:function()
+    {
+        var container = Components.classes["@mozilla.org/rdf/container;1"]
+                    .createInstance(Components.interfaces.nsIRDFContainer);
+        container.Init(BMDS, this.bmRes);
+        var bookmarks = new Array();
+        var elements = container.GetElements();
+        while (elements.hasMoreElements()) {
+            var element = elements.getNext().QueryInterface(Components.interfaces.nsIRDFResource);
+            bookmarks.push(new Bookmark(element,this.path + " " + this.Name))
+        }
+        return bookmarks;
+    }
 
 }
 
@@ -91,22 +106,26 @@ var bookmarkIndexer = {
     
     //get the bookmark  one by one 
     //if filter(bookmark) == true do action(bookmark)
-    walk: function(filter,action)
-    {   
-        //log("beagle begin walk ");
-        //BMDS : bookmarks data source 
-        //@see chrome://browser/content/bookmarks/bookmarks.js
-        var AllBookmarksResources = BMDS.GetAllResources();
-        var num = 0; 
-        while (AllBookmarksResources.hasMoreElements()) {
-            var bmRes = AllBookmarksResources.getNext().QueryInterface(kRDFRSCIID);
-            var bookmark = new Bookmark(bmRes);
-            //log("beagle check bookmark " + bookmark );
-            if(filter.call(null,bookmark))
+    walk: function(bm,filter,action)
+    {
+        var num = 0;
+        switch(bm.type)
+        {
+        //folder. walk it's chidren
+        case "Folder":
+        case "PersonalToolbarFolder":
+        case "IEFavoriteFolder":
+            var children = bm.getChildren();
+            for(var i = 0; i < children.length; i++)
+                num += this.walk(children[i],filter,action);
+            break;
+        default:
+            if(filter.call(null,bm))
             {
-                action.call(null,bookmark);
+                action.call(null,bm);
                 num ++;
             }
+            break;
         }
         return num;
     },
@@ -121,16 +140,17 @@ var bookmarkIndexer = {
             bookmark.URL,
             "FirefoxBookmark",
             "text/plain", //TODO what the content type should be 
-            "k:name=" + bookmark.Name,
+            "t:name=" + bookmark.Name,
+            "t:path=" + bookmark.path,
         ];
         if(bookmark.Description)
             meta.push("t:description=" + bookmark.Description);
         if(bookmark.ShortcutURL)
             meta.push("t:shortcuturl=" + bookmark.ShortcutURL);
-        if(bookmark.LastModifiedDate)
-            meta.push("k:lastmodifieddate=" + bookmark.LastModifiedDate);
-        if(bookmark.LastVisitDate)
-            meta.push("k:lastvisitdate=" + bookmark.LastVisitDate);
+        //if(bookmark.LastModifiedDate)
+        //    meta.push("k:lastmodifieddate=" + bookmark.LastModifiedDate);
+        //if(bookmark.LastVisitDate)
+        //    meta.push("k:lastvisitdate=" + bookmark.LastVisitDate);
         beagle.writeRawMetadata(meta,beagle.getMetaPath(bookmark.URL,"bookmark"));
         // a little hack , write empty content to content file
         beagle.writeRawMetadata([],beagle.getContentPath(bookmark.URL,"bookmark"));
@@ -152,8 +172,11 @@ var bookmarkIndexer = {
     */
     indexModified:function(report)
     {
+        var root = new Bookmark(RDF.GetResource("NC:BookmarksRoot"),"");
+        log(root);
         var lastIndexDate = beaglePref.get("beagle.bookmark.last.indexed.date");
         var num = this.walk(
+            root,
             function(bookmark){return bookmark.isBookmark() && bookmark.isModified(lastIndexDate);},
             this.indexBookmark
         );

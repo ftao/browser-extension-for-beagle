@@ -93,7 +93,7 @@ var beagle = {
         }
         else
         {
-            if(this.pref.get('beagle.enable'))
+            if(this.pref.get('beagle.autoindex.active'))
             {
                 this.enable();
             }
@@ -446,7 +446,7 @@ var beagle = {
         this.runStatus = this.RUN_DISABLED;
         this.STATUS_ICON.setAttribute("status","00f");
         this.STATUS_ICON.setAttribute("tooltiptext",_("beagle_tooltip_disabled"));
-        this.pref.set("beagle.enabled",false);
+        this.pref.set("beagle.autoindex.actived",false);
 
     },
 
@@ -455,7 +455,7 @@ var beagle = {
         this.runStatus = this.RUN_ENABLED;
         this.STATUS_ICON.setAttribute("status","000");
         this.STATUS_ICON.setAttribute("tooltiptext",_("beagle_tooltip_actived"));
-        this.pref.set("beagle.enabled",true);
+        this.pref.set("beagle.autoindex.actived",true);
     },
 
     error : function(msg)
@@ -463,7 +463,7 @@ var beagle = {
         this.runStatus = this.RUN_ERROR;
         this.STATUS_ICON.setAttribute("status","f00");
         this.STATUS_ICON.setAttribute("tooltiptext",_f("beagle_tooltip_error",[msg]));
-        this.pref.set("beagle.enabled",false);
+        this.pref.set("beagle.autoindex.actived",false);
     },
 
     quickAddRule : function (page,flag)

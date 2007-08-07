@@ -22,7 +22,7 @@ var beaglePref = {
       'beagle.conflict.action':{'type':'int','default':1},
       'beagle.include.list':{'type':'string','default':"[]"},
       'beagle.exclude.list':{'type':'string','default':"[]"},
-      'beagle.enabled':{'type':'bool','default':true},
+      'beagle.autoindex.active':{'type':'bool','default':true},
       'beagle.bookmark.active':{'type':'bool','default':false},
       'beagle.bookmark.last.indexed.date':{'type':'string','default':'0'},
     },
