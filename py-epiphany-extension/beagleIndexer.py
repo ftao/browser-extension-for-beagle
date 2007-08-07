@@ -28,33 +28,53 @@ import re
 import string
 
 #The following is about config
+class Config(dict):
+    def __getattr__(self, name):
+        return self[name]
+    def __setattr__(self, name,value):
+        self[name] = value
 
-#TODO: is it needed ?
-Module = type(os)
-modules = {}
-def load(fullpath, default={}, module=Module):
-      try:
-          code = open(fullpath).read()
-      except IOError:
-          return
-          #raise ImportError, 'No module named  %s' %fullpath
+def load(fullpath, default={}):
+    '''Load a config file as a Config Object'''
+    module = type(os)
+    try:
+        code = open(fullpath).read()
+    except IOError:
+        return Config(default)
+        #raise ImportError, 'No module named  %s' %fullpath
 
-      filename = os.path.basename(fullpath)
+    filename = os.path.basename(fullpath)
 
-      try:
-          return modules[filename]
-      except KeyError:
-          pass
+    m = module(filename)
+    exec compile(code, filename, 'exec') in m.__dict__
+    for item in default.items():
+        m.__dict__.setdefault(item[0],item[1])
+    return Config(m.__dict__)
 
-      m = module(filename)
-      m.__module_class__ = module
-      m.__file__ = fullpath
-      exec compile(code, filename, 'exec') in m.__dict__
-      for item in default.items():
-          m.__dict__.setdefault(item[0],item[1])
+def save(fullpath,config):
+    '''Save a Config Object to a config file'''
+    print "save config to file "
+    try:
+        outfile = open(fullpath,'w')
+    except IOError:
+        print "beagle save config file to to %s error " %fullpath
+        return
+    for key in config.keys():
+        if key[0] == '_':
+            continue
+        outfile.write(key + '=')
+        value = config[key]
+        if type(value) == type(True):
+            outfile.write(str(value) + '\n')
+        elif type(value) == type([]):
+            outfile.write('[\n')
+            for li in value:
+                outfile.write('"' + li + '",\n')
+            outfile.write(']\n')
+        else:
+            outfile.write('"Not supported type"\n')
+    outfile.close()
 
-      modules[filename] = m
-      return m
 
 #these are constant
 beagle_data_path = os.environ["HOME"] + "/.beagle/ToIndex/"
@@ -115,7 +135,11 @@ def _index_this_page_cb(action, window):
 def _toggle_auto_cb(action,window):
     print "toggle auto index"
     action = window.get_ui_manager().get_action('/menubar/ToolsMenu/BeagleMenu/PyBeagleExtAuto')
-    config.auto_index = action.get_active()
+    print action.get_active()
+    if config.auto_index != action.get_active():
+        config.auto_index = action.get_active()
+        save(config_file_path, config)
+
 
 # This is to pass to gtk.ActionGroup.add_actions()
 _actions = [
@@ -204,7 +228,9 @@ def write_meta(embed,path):
     meta_file.write("text/html\n")
     meta_file.write("k:_uniddexed:encoding="+embed.get_encoding() + "\n")
     meta_file.close()
- 
+
+#Implement epiphany extension interface
+
 def attach_window(window):
     ui_manager = window.get_ui_manager()
     group = gtk.ActionGroup('PyBeagleExt')
