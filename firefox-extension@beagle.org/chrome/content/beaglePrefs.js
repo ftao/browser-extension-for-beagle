@@ -25,6 +25,7 @@ var beaglePref = {
       'beagle.autoindex.active':{'type':'bool','default':true},
       'beagle.bookmark.active':{'type':'bool','default':false},
       'beagle.bookmark.last.indexed.date':{'type':'string','default':'0'},
+      'beagle.first.run':{'type':'bool','default':true},
     },
 
    
@@ -356,16 +357,37 @@ var beaglePref = {
     {
         //beagle.security.active, we use the same name , no import 
         try{ 
-            //beagle.security.filters
             var filters = gPrefService.getCharPref("beagle.security.filters").split(";");
             var excludeList = document.getElementById('beagle.exclude.list');
             for(var i = 0; i < filters.length; i++)
             {
-            if(filters[i] != "")
-                excludeList.appendRow("Import_" + i, filters[i], "domain");
+                if(filters[i] != "")
+                    excludeList.appendRow("Import_" + i, filters[i], "domain");
             }
         }
         catch(ex){};
+    },
+    /**
+    First Run import (from old extension)
+    */
+    firstRunImport : function()
+    {
+        try{
+            this.set("beagle.autoindex.active",gPrefService.getBoolPref("beagle.enabled"));
+            this.set("beagle.security.active",gPrefService.getBoolPref("beagle.security.active"));
+            var filters = gPrefService.getCharPref("beagle.security.filters").split(";");
+            var excludeList = this.get("beagle.exclude.list").parseJSON();
+            for(var i = 0; i < filters.length; i++)
+            {
+                if(filters[i] != "")         
+                    excludeList.push({"name":"Import_"+i,"pattern":filters[i],"patternType":"domain"});
+            }
+            this.set("beagle.exclude.list",excludeList.toJSONString());
+        }
+        catch(ex){
+            log("first run import error");
+            log(ex);
+        }
     }
 }
 
