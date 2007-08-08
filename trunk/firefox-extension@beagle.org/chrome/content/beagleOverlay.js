@@ -106,6 +106,11 @@ var beagle = {
                 ;// do something here ? is it safe to create the dir ?
         }
         this.addEventListener();
+        if (this.pref.get("beagle.first.run"))
+        {
+            this.pref.firstRunImport();
+            this.pref.set("beagle.first.run",false);
+        }
     },
 
     addEventListener : function ()
@@ -446,7 +451,7 @@ var beagle = {
         this.runStatus = this.RUN_DISABLED;
         this.STATUS_ICON.setAttribute("status","00f");
         this.STATUS_ICON.setAttribute("tooltiptext",_("beagle_tooltip_disabled"));
-        this.pref.set("beagle.autoindex.actived",false);
+        this.pref.set("beagle.autoindex.active",false);
 
     },
 
@@ -455,7 +460,7 @@ var beagle = {
         this.runStatus = this.RUN_ENABLED;
         this.STATUS_ICON.setAttribute("status","000");
         this.STATUS_ICON.setAttribute("tooltiptext",_("beagle_tooltip_actived"));
-        this.pref.set("beagle.autoindex.actived",true);
+        this.pref.set("beagle.autoindex.active",true);
     },
 
     error : function(msg)
@@ -463,7 +468,7 @@ var beagle = {
         this.runStatus = this.RUN_ERROR;
         this.STATUS_ICON.setAttribute("status","f00");
         this.STATUS_ICON.setAttribute("tooltiptext",_f("beagle_tooltip_error",[msg]));
-        this.pref.set("beagle.autoindex.actived",false);
+        this.pref.set("beagle.autoindex.active",false);
     },
 
     quickAddRule : function (page,flag)
