@@ -316,11 +316,11 @@ var beagle = {
             url,
             'WebHistory',
             page.contentType,
-            "k:_uniddexed:encoding="+page.characterSet,
+            "k:_unindexed:encoding="+page.characterSet,
             ];
         if(typeof page.referrer != "undefined" && page.referrer != "")
         {
-            meta.push("k:referrer=" + page. referrer);
+            meta.push("t:referrer=" + page. referrer);
         }
         if(this.tasks[url] && this.tasks[url]['meta'])
         {
@@ -418,7 +418,7 @@ var beagle = {
             return;
         //log("add meta referrer " + gBrowser.currentURI.spec );
         this.tasks[url] = {
-            meta:["k:referrer=" + gBrowser.currentURI.spec],
+            meta:["t:referrer=" + gBrowser.currentURI.spec],
         };
         window.openDialog("chrome://newbeagle/content/indexLink.xul",
             "","chrome,centerscreen,all,resizable,dialog=no",url);
@@ -433,7 +433,7 @@ var beagle = {
         this.tasks[url] = {
             meta:[
                 "t:alttext="+(image.getAttribute('alt')?image.getAttribute('alt'):""),
-                "k:referrer="+gBrowser.currentURI.spec
+                "t:referrer="+gBrowser.currentURI.spec
             ],
         };
         window.openDialog("chrome://newbeagle/content/indexLink.xul",
