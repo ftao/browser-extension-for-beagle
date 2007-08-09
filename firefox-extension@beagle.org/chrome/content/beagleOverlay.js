@@ -211,8 +211,6 @@ var beagle = {
      */
     shouldIndex : function(page)
     {
-        if(!this.checkPage(page))
-            return false;
 
         var prefObject = this.pref.load();
         
@@ -338,12 +336,28 @@ var beagle = {
     {
         setTimeout(function(){document.getElementById('statusbar-display').label = msg;},100);
     },
-
+    
+    promptExtraKeywords : function(url)
+    {
+        //prompt for keywords.
+        if(this.pref.get("beagle.prompt.keywords.active"))
+        {
+            var keywords = window.prompt(_("beagle_prompt_keywords_title"),_("beagle_prompt_keywords_text"));
+            if(keywords != null && keywords != "")
+            {
+                try{
+                    this.tasks[url]["meta"].push("t:extrakeywords="+ keywords);
+                }
+                catch(ex){
+                    if(!this.tasks[url]) 
+                        this.tasks[url] = {};
+                    this.tasks[url]["meta"] = ["t:extrakeywords="+ keywords];
+                }
+            }
+        }
+    },
     indexPage : function(page)
     {
-
-        if(!this.checkPage(page))
-            return;
 
         log(" We will index " + page.location.href ); 
         
@@ -388,6 +402,14 @@ var beagle = {
         this.setStatusLabel(_f("beagle_statuslabel_indexing",[url]));
     },
 
+    indexThisPage : function()
+    {
+        var doc = document.getElementById('content').selectedBrowser.contentDocument;
+        if(!this.checkPage(doc))
+            return;
+        this.promptExtraKeywords(doc.location.href);
+        this.indexPage(doc);
+    },
 
     indexLink : function()
     {
@@ -419,9 +441,12 @@ var beagle = {
     },
 
     onLinkLoad : function(url,contentType,doc)
-    {
+    {   
+        this.promptExtraKeywords(url);
         if(contentType.match(/(text|html|xml)/i) && doc)// a document
         {
+            if(!this.checkPage(doc))
+                return;
             this.indexPage(doc);
         }
         else
@@ -441,6 +466,8 @@ var beagle = {
         }
 
         var page = event.originalTarget;
+        if (!this.checkPage(page))
+            return;
         if (!this.shouldIndex(page))
             return;
         this.indexPage(page);

@@ -18,12 +18,13 @@ var beaglePref = {
     // Declare Pref Keys and Type.
     prefKeys : { 
       'beagle.security.active':{'type':'bool','default':false},
+      'beagle.bookmark.active':{'type':'bool','default':false},
+      'beagle.prompt.keywords.active':{'type':'bool','default':false},
       'beagle.default.action':{'type':'int','default':1},
       'beagle.conflict.action':{'type':'int','default':1},
       'beagle.include.list':{'type':'string','default':"[]"},
       'beagle.exclude.list':{'type':'string','default':"[]"},
       'beagle.autoindex.active':{'type':'bool','default':true},
-      'beagle.bookmark.active':{'type':'bool','default':false},
       'beagle.bookmark.last.indexed.date':{'type':'string','default':'0'},
       'beagle.first.run':{'type':'bool','default':true},
     },
@@ -117,7 +118,7 @@ var beaglePref = {
     UIInit : function ()
     {
         log("beaglePref uiinit");
-        var checkboxElements = ["beagle.security.active","beagle.bookmark.active"]
+        var checkboxElements = ["beagle.security.active","beagle.bookmark.active","beagle.prompt.keywords.active"]
         for(var i = 0; i < checkboxElements.length; i++)
         {
             var elementID = checkboxElements[i];
@@ -190,7 +191,7 @@ var beaglePref = {
     {
         var prefs = {};
         
-        var checkboxElements = ["beagle.security.active","beagle.bookmark.active"]
+        var checkboxElements = ["beagle.security.active","beagle.bookmark.active","beagle.prompt.keywords.active"]
         for(var i = 0; i < checkboxElements.length; i++)
         {
             var elementID = checkboxElements[i];

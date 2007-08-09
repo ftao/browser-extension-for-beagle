@@ -30,7 +30,7 @@
 
 <commandset id="mainCommandSet">
     <command id="IndexThisCmd" label="&beagle.run.index.this.label;" 
-        oncommand="beagle.indexPage(document.getElementById('content').selectedBrowser.contentDocument)"/>
+        oncommand="beagle.indexThisPage();"/>
     <command id="AlwaysIndexThisSiteCmd" label="&beagle.run.always.index.label;"  
         oncommand="beagle.quickAddRule(document.getElementById('content').selectedBrowser.contentDocument,beaglePref.RULE_INCLUDE)"/>
     <command id="NeverIndexThisSiteCmd" label="&beagle.run.never.index.label;" 
