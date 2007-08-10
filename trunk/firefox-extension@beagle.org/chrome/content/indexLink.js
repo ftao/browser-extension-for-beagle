@@ -46,6 +46,8 @@ beagleInvisibleBrowser = {
     */
     save : function(url,path)
     {
+        window.opener.beagle.saveFile(url,path,this);
+        /*
         var tmpfile = Components.classes["@mozilla.org/file/local;1"].createInstance(Components.interfaces.nsILocalFile);
         tmpfile.initWithPath(path);
         var cacheKey  = Components.classes['@mozilla.org/supports-string;1'].createInstance(Components.interfaces.nsISupportsString);
@@ -61,7 +63,7 @@ beagleInvisibleBrowser = {
         this.persist.persistFlags = window.opener.beagle.PersistMask;
         this.persist.progressListener =  this;
         this.persist.saveURI(uri, cacheKey, hosturi, null, null, tmpfile);
-    
+        */ 
     },
 
     /**

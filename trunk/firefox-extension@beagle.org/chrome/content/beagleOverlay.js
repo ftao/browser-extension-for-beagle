@@ -77,7 +77,11 @@ var beagle = {
     },
 
     tasks: [],
-
+    startTask : function(url,extrameta)
+    {
+        this.tasks[url] = {meta:extrameta};
+    },
+ 
     /*
      * init beagle, init status, init pathes .....
      * we will NOT get the prefs as it might be changed after init
@@ -280,7 +284,28 @@ var beagle = {
         persist.persistFlags = this.PersistMask;
         persist.saveDocument(page, tmpfile, null, null, this.EncodeMask, 0);
     },
-
+    /**
+    for non-html file . save it (to ~/.beagle/ToIndex)
+    */
+    saveFile : function(url,path,progressListener)
+    {
+        var tmpfile = Components.classes["@mozilla.org/file/local;1"].createInstance(Components.interfaces.nsILocalFile);
+        tmpfile.initWithPath(path);
+        var cacheKey  = Components.classes['@mozilla.org/supports-string;1'].createInstance(Components.interfaces.nsISupportsString);
+        cacheKey.data = url;
+        var urifix  = Components.classes['@mozilla.org/docshell/urifixup;1'].getService(Components.interfaces.nsIURIFixup);
+        var uri     = urifix.createFixupURI(url, 0);
+        var hosturi = null;
+        if (uri.host.length > 0)
+        {
+            hosturi = urifix.createFixupURI(uri.host, 0);
+        }
+        this.persist = Components.classes['@mozilla.org/embedding/browser/nsWebBrowserPersist;1'].createInstance(Components.interfaces.nsIWebBrowserPersist);
+        this.persist.persistFlags = this.PersistMask;
+        if(progressListener)
+            this.persist.progressListener = progressListener; 
+        this.persist.saveURI(uri, cacheKey, hosturi, null, null, tmpfile);
+    },
     /**
      write raw-meatadata 
     */
@@ -320,12 +345,9 @@ var beagle = {
             ];
         if(typeof page.referrer != "undefined" && page.referrer != "")
         {
-            meta.push("t:referrer=" + page. referrer);
+            meta.push("t:fixme:referrer=" + page.referrer);
         }
-        if(this.tasks[url] && this.tasks[url]['meta'])
-        {
-            meta = meta.concat(this.tasks[url]['meta'])
-        }
+        meta = meta.concat(this.tasks[url]['meta'])
         beagle.writeRawMetadata(meta,tmpfilepath);
     },
 
@@ -342,17 +364,14 @@ var beagle = {
         //prompt for keywords.
         if(this.pref.get("beagle.prompt.keywords.active"))
         {
-            var keywords = window.prompt(_("beagle_prompt_keywords_title"),_("beagle_prompt_keywords_text"));
-            if(keywords != null && keywords != "")
+            var prompts = Components.classes["@mozilla.org/embedcomp/prompt-service;1"]
+                                        .getService(Components.interfaces.nsIPromptService);
+            var input = { value: "" };
+            var chk = { value:false };
+            result = prompts.prompt(window, _("beagle_prompt_keywords_title"),_("beagle_prompt_keywords_text"), input, null, chk);
+            if (result)
             {
-                try{
-                    this.tasks[url]["meta"].push("t:extrakeywords="+ keywords);
-                }
-                catch(ex){
-                    if(!this.tasks[url]) 
-                        this.tasks[url] = {};
-                    this.tasks[url]["meta"] = ["t:extrakeywords="+ keywords];
-                }
+                this.tasks[url]["meta"].push("t:dc:keyword="+ input.value);
             }
         }
     },
@@ -407,8 +426,18 @@ var beagle = {
         var doc = document.getElementById('content').selectedBrowser.contentDocument;
         if(!this.checkPage(doc))
             return;
-        this.promptExtraKeywords(doc.location.href);
-        this.indexPage(doc);
+        var url = doc.location.href;
+        this.startTask(url,[]);
+        this.promptExtraKeywords(url);
+        if(doc.contentType.match(/(text|html|xml)/i))// a document
+        {
+            this.indexPage(doc);
+        }
+        else
+        {
+            this.saveFile(url,this.getContentPath(url),null);
+            this.indexFile(url);
+        }
     },
 
     indexLink : function()
@@ -418,7 +447,7 @@ var beagle = {
             return;
         //log("add meta referrer " + gBrowser.currentURI.spec );
         this.tasks[url] = {
-            meta:["t:referrer=" + gBrowser.currentURI.spec],
+            meta:["t:fixme:referrer=" + gBrowser.currentURI.spec],
         };
         window.openDialog("chrome://newbeagle/content/indexLink.xul",
             "","chrome,centerscreen,all,resizable,dialog=no",url);
@@ -430,12 +459,10 @@ var beagle = {
         if(image.tagName.toLowerCase() != 'img' || !image.src)
             return;
         var url = image.src;
-        this.tasks[url] = {
-            meta:[
+        this.startTasks(url,[
                 "t:alttext="+(image.getAttribute('alt')?image.getAttribute('alt'):""),
-                "t:referrer="+gBrowser.currentURI.spec
-            ],
-        };
+                "t:fixme:referrer="+gBrowser.currentURI.spec]
+                );
         window.openDialog("chrome://newbeagle/content/indexLink.xul",
             "","chrome,centerscreen,all,resizable,dialog=no",url);
     },
@@ -465,11 +492,12 @@ var beagle = {
             return;
         }
 
-        var page = event.originalTarget;
+        //var page = event.originalTarget;
         if (!this.checkPage(page))
             return;
         if (!this.shouldIndex(page))
             return;
+        this.startTask(page.location.href,[]);
         this.indexPage(page);
     },   
 
