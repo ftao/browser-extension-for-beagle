@@ -436,7 +436,7 @@ var beagle = {
         else
         {
             this.saveFile(url,this.getContentPath(url),null);
-            this.indexFile(url);
+            this.indexFile(url,doc.contentType);
         }
     },
 
