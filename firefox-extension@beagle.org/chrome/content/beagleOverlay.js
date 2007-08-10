@@ -285,7 +285,7 @@ var beagle = {
         persist.saveDocument(page, tmpfile, null, null, this.EncodeMask, 0);
     },
     /**
-    for non-html file . save it (to ~/.beagle/ToIndex)
+    for non-html file . save it 
     */
     saveFile : function(url,path,progressListener)
     {
@@ -491,14 +491,22 @@ var beagle = {
             log(" NOT RUN_ENABLED status .  NO INDEX");
             return;
         }
-
-        //var page = event.originalTarget;
+        var page = event.originalTarget;
         if (!this.checkPage(page))
             return;
         if (!this.shouldIndex(page))
             return;
-        this.startTask(page.location.href,[]);
-        this.indexPage(page);
+        var url = page.location.href;
+        this.startTask(url,[]);
+        if(page.contentType.match(/(text|html|xml)/i))// a document
+        {
+            this.indexPage(page);
+        }
+        else
+        {
+            this.saveFile(url,this.getContentPath(url),null);
+            this.indexFile(url,page.contentType);
+        }
     },   
 
     disable : function()
@@ -507,7 +515,6 @@ var beagle = {
         this.STATUS_ICON.setAttribute("status","00f");
         this.STATUS_ICON.setAttribute("tooltiptext",_("beagle_tooltip_disabled"));
         this.pref.set("beagle.autoindex.active",false);
-
     },
 
     enable : function()
