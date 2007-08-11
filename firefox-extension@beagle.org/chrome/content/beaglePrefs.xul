@@ -1,18 +1,17 @@
 <?xml version="1.0"?>
 
-<!DOCTYPE overlay SYSTEM "chrome://newbeagle/locale/beagle.dtd">
+<!DOCTYPE window SYSTEM "chrome://newbeagle/locale/beagle.dtd">
 
 <?xml-stylesheet href="chrome://global/skin/global.css" type="text/css"?>
 
-<dialog id="beagle-pref"
-  buttons="accept,cancel"
-  ondialogaccept="beaglePref.onSave();"
-  onload="beaglePref.init();" 
-  persist="screenX screenY"
-  title="&beagle.pref.label;"
-  flex="1"
-  style="min-width:500px"
-  xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul">
+<window id="beagle-pref"
+    buttons="accept,cancel,help" 
+    onload="beaglePref.init();" 
+    persist="screenX screenY width height"
+    title="&beagle.pref.label;"
+    flex="1"
+    style="min-width:500px"
+    xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul">
     <stringbundleset id="stringbundleset">
         <stringbundle id="beagleStrings"
                 src="chrome://newbeagle/locale/beagle.properties"/>
@@ -32,8 +31,6 @@
     
     <script type="text/javascript" src="beaglePrefs.js" />
       
-    <dialogheader title="&beagle.pref.label;"/>
-
     <groupbox>
         <caption label="&beagle.pref.groupbox.general.label;" />
         <!--checkbox 
@@ -75,9 +72,9 @@
     </groupbox>
 
     <!--The Patterns to Include-->		  
-    <groupbox >
+    <groupbox flex="1">
         <caption label="&beagle.pref.groupbox.include.label;"/>
-        <hbox>
+        <hbox flex="1">
         <vbox flex="1">
         <listbox flex="1" rows="4" id="beagle.include.list">
         <listhead>
@@ -101,9 +98,9 @@
 
 
     <!--The Patterns to Exclude-->		  
-    <groupbox >
+    <groupbox flex="1">
         <caption label="&beagle.pref.groupbox.exclude.label;"/>	
-        <hbox>
+        <hbox flex="1">
         <vbox flex="1">
         <listbox flex="1" rows="4" id="beagle.exclude.list">
         <listhead>
@@ -124,21 +121,30 @@
         </vbox>
         </hbox>
     </groupbox>
-
     <hbox>
-    <button command="ExportCmd"/>
-    <button command="ImportCmd"/>
-    <button id="beagle.import.from.old" command="ImportFromOldExtensionCmd" disabled="true"/>
+        <button command="HelpCmd"/>
+        <button command="CancelCmd"/>
+        <button command="SaveCmd"/>
     </hbox>
 
-    <command id="AddIncludeFilterCmd" label="&beagle.pref.filter.add.label;" oncommand="beaglePref.onAddFilter('include')"/>
-    <command id="AddExcludeFilterCmd" label="&beagle.pref.filter.add.label;" oncommand="beaglePref.onAddFilter('exclude')"/>
-    <command id="RemoveIncludeFilterCmd" label="&beagle.pref.filter.remove.label;" oncommand="beaglePref.onRemoveFilter('include')"/>
-    <command id="RemoveExcludeFilterCmd" label="&beagle.pref.filter.remove.label;" oncommand="beaglePref.onRemoveFilter('exclude')"/>
-    <command id="ExportCmd" label="&beagle.pref.export.label;" oncommand="beaglePref.onExport()"/>
-    <command id="ImportCmd" label="&beagle.pref.import.label;" oncommand="beaglePref.onImport()"/>
-    <command id="ImportFromOldExtensionCmd" label="&beagle.pref.importold.label;" oncommand="beaglePref.onImportFromOld()"/>
-</dialog> 
+    <commandset>
+        <command id="AddIncludeFilterCmd" label="&beagle.pref.filter.add.label;" 
+            oncommand="beaglePref.onAddFilter('include')"/>
+        <command id="AddExcludeFilterCmd" label="&beagle.pref.filter.add.label;" 
+            oncommand="beaglePref.onAddFilter('exclude')"/>
+        <command id="RemoveIncludeFilterCmd" label="&beagle.pref.filter.remove.label;" 
+            oncommand="beaglePref.onRemoveFilter('include')"/>
+        <command id="RemoveExcludeFilterCmd" label="&beagle.pref.filter.remove.label;" 
+            oncommand="beaglePref.onRemoveFilter('exclude')"/>
+    
+        <command id="HelpCmd" label="&beagle.pref.help.label;" 
+            oncommand="window.open('http://beagle-project.org/Browser_Extension#Firefox_Extension');"/>
+        <command id="SaveCmd" label="&beagle.pref.save.label;" 
+            oncommand="beaglePref.onSave();window.close();"/>
+        <command id="CancelCmd" label="&beagle.pref.cancel.label;" 
+            oncommand="window.close();"/>
+    </commandset>
+</window> 
 
 
 

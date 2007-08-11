@@ -3,15 +3,12 @@
  * An Extension for the Firefox Browser.
  */
 
-// I hate global var , but I have to use it here.
 // Initiate a new preference instance.
 var gPrefService = Components.classes['@mozilla.org/preferences-service;1'].getService(Components.interfaces.nsIPrefBranch);
 
 var beaglePref = {
-    
-    //I use this value to check weather a file is a valid beagle preference file 
-    appUID : "browser-extesnion@beagle.org", 
-    
+   
+    //some constant
     RULE_INCLUDE : 1,
     RULE_EXCLUDE : 2,
 
@@ -47,9 +44,9 @@ var beaglePref = {
     prefObject : {},
     
     /**
-    get the pref value by key
-    we will use right type according to prefKeys
-    */
+     * get the pref value by key
+     * we will use right type according to prefKeys
+     */
     get : function(key)
     {
         if(!this.prefKeys.hasOwnProperty(key))
@@ -63,6 +60,10 @@ var beaglePref = {
         }
     },
 
+    /**
+     * set pref value 
+     * we will use right type according to prefKeys
+     */
     set : function(key,value)
     {
         if(!this.prefKeys.hasOwnProperty(key))
@@ -78,7 +79,7 @@ var beaglePref = {
     },
 
     /*
-     * Load Prefs into a javascript object
+     * Load Prefs into a javascript object (this.prefObject)
      *
      */
     load : function()
@@ -87,17 +88,19 @@ var beaglePref = {
         
         for(key in this.prefKeys)
         {
+            if(!this.prefKeys.hasOwnProperty(key))
+                continue;
             var value = this.get(key);
             if(value != null)
                 this.prefObject[key] = value;
             else
-                log(key + "is null" );
+                log(key + " is null" );
         }
         return this.prefObject;
     },
 
     /*
-     * Save Prefs into firefox
+     * Save Prefs (in this.prefObject) into firefox
      */
     save : function()
     {
@@ -108,6 +111,9 @@ var beaglePref = {
         //log("Save Beagle Prefs:" + this.prefObject.toJSONString() );
     },
 
+    /**
+     * init beagle pref , load pref, init UI
+     */
     init : function ()
     {
         log("beaglePref init");
@@ -115,6 +121,9 @@ var beaglePref = {
         this.UIInit();
     },
 
+    /**
+     *  init the UI
+     */
     UIInit : function ()
     {
         log("beaglePref uiinit");
@@ -123,11 +132,11 @@ var beaglePref = {
         {
             var elementID = checkboxElements[i];
             try{
-                $(elementID).checked = this.prefObject[elementID]
+                document.getElementById(elementID).checked = this.prefObject[elementID]
              }
             catch(ex){
                 log(ex);
-                $(elementID).checked = true;
+                document.getElementById(elementID).checked = true;
              }
         }
 
@@ -135,13 +144,13 @@ var beaglePref = {
         for(var i = 0; i < radioElements.length; i++)
         {
             var elementID = radioElements[i];
-            var radios = $(elementID).getElementsByTagName('radio');
+            var radios = document.getElementById(elementID).getElementsByTagName('radio');
             try{
                 for (var j = 0; j < radios.length; j++)
                 {
                     if(radios[j].value == this.prefObject[elementID])
                     {
-                        $(elementID).selectedItem = radios[j]
+                        document.getElementById(elementID).selectedItem = radios[j]
                         break;
                     }
                 }
@@ -152,20 +161,20 @@ var beaglePref = {
         }
      
         //beagle.include.list and beagle.exclude.list
-        var listElementIDs = ["beagle.include.list","beagle.exclude.list"];
-        for (var i = 0; i < listElementIDs.length; i++)
+        var listElements = ["beagle.include.list","beagle.exclude.list"];
+        for (var i = 0; i < listElements.length; i++)
         {
-            var elementID = listElementIDs[i];
+            var elementID = listElements[i];
             try{
                 var items = this.prefObject[elementID].parseJSON(); 
-                var listbox = $(elementID) ;
+                var listbox = document.getElementById(elementID) ;
                 //log("listbox.getRowCount:" + listbox.getRowCount() + '\n');
                 var num = listbox.getRowCount();
                 for (var j = 0; j < num; j++)
                     listbox.removeItemAt(0);
                 
                 for (var j = 0; j < items.length; j++){
-                    listbox.appendRow(items[j]['name'],items[j]['pattern'],items[j]['patternType']);
+                    appendRow(listbox,items[j]['name'],items[j]['pattern'],items[j]['patternType']);
                  }
             } catch(ex) {
                 log(ex);
@@ -174,7 +183,7 @@ var beaglePref = {
         }
         //if there are old extension's pref   enable the import-from-old button 
         try{
-            if ( gPrefService.getCharPref("beagle.security.filters"))
+            if (gPrefService.getCharPref("beagle.security.filters"))
                 document.getElementById('beagle.import.from.old').disabled = false;
         }
         catch(ex){
@@ -183,9 +192,12 @@ var beaglePref = {
      
     },
 
+    /****************************************************************************
+     *                      Event Handlers 
+     ***************************************************************************/
+    
     /*
-     *This function is called when the ok button is clicked
-     *
+     *  This function is called when the save button is clicked
      */
     onSave : function ()
     {
@@ -196,7 +208,7 @@ var beaglePref = {
         {
             var elementID = checkboxElements[i];
             try{
-                prefs[elementID] = $(elementID).checked;
+                prefs[elementID] = document.getElementById(elementID).checked;
              }
             catch(e){
                 prefs[elementID] = false;
@@ -208,7 +220,7 @@ var beaglePref = {
         {
             var elementID = radioElements[i];
             try{
-                prefs[elementID] = $(elementID).value;
+                prefs[elementID] = document.getElementById(elementID).value;
              }
             catch(e){
              }
@@ -221,7 +233,7 @@ var beaglePref = {
             var elementID = listElementIDs[i];
             try {
                 var items = new Array() ;
-                var listbox = $(elementID) ;
+                var listbox = document.getElementById(elementID) ;
 
                 for (var j = 0; j < listbox.getRowCount(); j++){
                     var listitem =  listbox.getItemAtIndex(j);
@@ -241,6 +253,9 @@ var beaglePref = {
         this.save();   
     },
 
+    /**
+     * add a filter 
+     */
     onAddFilter : function (type)
     {
         window.openDialog(
@@ -251,10 +266,9 @@ var beaglePref = {
         );
     },
 
-    /*
-    remove a filter
-    @arg type include or exclude
-    */
+    /**
+     *remove a filter
+     */
     onRemoveFilter : function(type) 
     {
         try{
@@ -265,73 +279,14 @@ var beaglePref = {
         }
     },
 
-    /*
-     * export current prefs into an file
-     * It export the value that saved in firefox, not the value showed on the UI
-     * TODO: choose the right logic
-     */
-    onExport : function()
-    {
-        var nsIFilePicker = Components.interfaces.nsIFilePicker;
-        var fp = Components.classes["@mozilla.org/filepicker;1"]
-                .createInstance(nsIFilePicker);
-        //fp.appendFilter("js","*.js");
-        fp.init(window, _("beagle_pref_export_select_file"), nsIFilePicker.modeSave);
-        var res = fp.show();
-        if (res != nsIFilePicker.returnCancel){
-            var exportFile = new File(fp.file.path);
-            if(exportFile.exists())
-            {
-                exportFile.remove();
-            }
-            exportFile.create();
-            exportFile.open('w');
-            this.load();
-            this.prefObject["uid"] = this.appUID;
-            exportFile.write(this.prefObject.toJSONString());
-            exportFile.close();
-        }
-    },
-
-    /*
-     * import prefs from an file
-     * UI will be updated. But the values will not be saved until save button is clicked. 
-     * TODO: choose the right logic 
-     */
-    onImport : function ()
-    {
-        var nsIFilePicker = Components.interfaces.nsIFilePicker;
-        var fp = Components.classes["@mozilla.org/filepicker;1"]
-                .createInstance(nsIFilePicker);
-        //fp.appendFilter("js","*.js");
-        fp.init(window, _("beagle_pref_import_select_file"), nsIFilePicker.modeOpen);
-        var res = fp.show();
-        if (res == nsIFilePicker.returnOK){
-            var importFile = new File(fp.file.path);
-            importFile.open('r');
-            var jsonString = importFile.read();
-            importFile.close();
-            try{
-                var beaglePrefs = jsonString.parseJSON();
-                if(beaglePrefs["uid"]==undefined || beaglePrefs["uid"] != this.appUID)
-                    throw new Error(_("beagle_pref_import_not_valid")); 
-            }
-            catch(e){
-                window.alert(_("beagle_pref_import_alert_not_valid"));
-                return false;
-            }
-            this.prefObject = beaglePrefs;
-            this.UIInit();
-        }
-    },
-
+    
     /**
-    Add Exclude / Include rule
-    @arg name the rule name
-    @arg pattern the pattern
-    @arg type the pattern type 
-    @arg flag  RULE_INCLUDE or RULE_EXCLUDE
-    */
+     * Add Exclude / Include rule
+     * name the rule name
+     * pattern the pattern
+     * type the pattern type 
+     * flag  RULE_INCLUDE or RULE_EXCLUDE
+     */
     addRule : function (name,pattern,type,flag)
     {
         switch(flag)
@@ -352,25 +307,8 @@ var beaglePref = {
     },
 
     /**
-    Import prefs from old extension.
-    */
-    onImportFromOld : function ()
-    {
-        //beagle.security.active, we use the same name , no import 
-        try{ 
-            var filters = gPrefService.getCharPref("beagle.security.filters").split(";");
-            var excludeList = document.getElementById('beagle.exclude.list');
-            for(var i = 0; i < filters.length; i++)
-            {
-                if(filters[i] != "")
-                    excludeList.appendRow("Import_" + i, filters[i], "domain");
-            }
-        }
-        catch(ex){};
-    },
-    /**
-    First Run import (from old extension)
-    */
+     * First Run import (from old extension)
+     */
     firstRunImport : function()
     {
         try{
@@ -389,6 +327,6 @@ var beaglePref = {
             log("first run import error");
             log(ex);
         }
-    }
+    },
 }
 

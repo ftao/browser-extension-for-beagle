@@ -21,10 +21,7 @@ function gettext(key)
     return ret;
 }
 
-function _(key)
-{
-    return gettext(key);
-}
+var _ = gettext;
 
 function getformatedtext(key,subs)
 {
@@ -46,13 +43,9 @@ function getformatedtext(key,subs)
     return ret;
 }
 
-function _f(key,subs)
-{
-    return getformatedtext(key,subs);   
-}
+var _f = getformatedtext;
 
 function initBundles(){
-    //alert(document.getElementById('beagleStrings'));
     bundles.push(document.getElementById('beagleStrings'));
 }
 

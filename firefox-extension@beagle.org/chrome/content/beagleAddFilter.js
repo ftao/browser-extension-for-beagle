@@ -5,7 +5,7 @@ function beaglePrefsAddFilterClicked() {
 	var type = window.arguments[0];
 	var elementId = 'beagle.'+type+'.list';
 	var listbox = window.opener.document.getElementById(elementId);
-    listbox.appendRow(name,pattern,patternType);
+    appendRow(listbox,name,pattern,patternType);
 }
 
 

@@ -3,7 +3,6 @@
  * An Extension for the Firefox  Browser.
  */
 
-
 var beagle = {
     //some constant 
     RUN_BEAGLE_NOT_FOUND:-1,
@@ -17,6 +16,7 @@ var beagle = {
     ENV:Components.classes["@mozilla.org/process/environment;1"].getService(Components.interfaces.nsIEnvironment),
 
     FILE_UTILS:new FileUtils(),// js lib  file utils
+    
     /**
      *@see http://www.xulplanet.com/references/xpcomref/comps/c_embeddingbrowsernsWebBrowserPersist1.html
      */
@@ -38,12 +38,15 @@ var beagle = {
     get STATUS_ICON(){ 
         return document.getElementById('beagle-notifier-status');
     },
-    
+    /**
+     * beagle data path (should be ~/.beagle/ToIndex)
+     */
     dataPath : null,
     
+    
     /**
-    the path to beagle search ,it is used for search (for link/page/text)
-    */
+     * the path to beagle search ,it is used for search (for link/page/text)
+     */
     get beagleSearchPath() { 
         var path = this.ENV.get("PATH");
         if (path) {
@@ -58,7 +61,24 @@ var beagle = {
         }
         return undefined;
     },
+    
+    /**
+     * save the tasks for the purpose of extra meta data
+     */ 
+    tasks: [],
+   
+    /**
+     * always call this before any index work begins 
+     */
+    startTask : function(url,extrameta)
+    {
+        this.tasks[url] = {meta:extrameta};
+    },
 
+    /**
+     * get the content file path for a give url and type 
+     * type can be "web" or "bookmark"
+     */
     getContentPath: function(url,type)
     {
         if(typeof type == "undefined")
@@ -68,6 +88,10 @@ var beagle = {
         
     },
 
+    /**
+     * get the meta file path for a give url and type 
+     * type can be "web" or "bookmark"
+     */
     getMetaPath: function(url,type)
     {
         if(typeof type == "undefined")
@@ -76,16 +100,13 @@ var beagle = {
         return this.dataPath + "/.firefox-beagle-"+ type + "-" + hash;
     },
 
-    tasks: [],
-    startTask : function(url,extrameta)
-    {
-        this.tasks[url] = {meta:extrameta};
-    },
- 
-    /*
-     * init beagle, init status, init pathes .....
-     * we will NOT get the prefs as it might be changed after init
-     * we will get the prefs when we need it.
+    /**
+     * init beagle
+     * check environment
+     * init state
+     * init some varible
+     * add event listeners 
+     * import pref from oldExtension (if beagle.first.run)
      */
     init : function()
     {
@@ -116,7 +137,11 @@ var beagle = {
             this.pref.set("beagle.first.run",false);
         }
     },
-
+    
+    /**
+     * add the event listeners
+     * 
+     */
     addEventListener : function ()
     {
         // Add listener for page loads
@@ -161,9 +186,11 @@ var beagle = {
             Function.bind(this.onIconClick,this),
             false
         );
-        //document.getElementById('beagle-notifier-status').onmouseup = function(event){ bealge.onIconClick(event);};
     },
 
+    /**
+     * show the beagle context menu
+     */
     initContextMenu : function (e)
     {
         if(e.originalTarget.id != "contentAreaContextMenu")
@@ -177,20 +204,24 @@ var beagle = {
             _f("beagle_context_search_text",[getBrowserSelection(16)]));
     },
 
+    /**
+     *  check enviroment 
+     */
     checkEnv : function()
     {
         if (!this.FILE_UTILS.exists (this.ENV.get("HOME") + "/.beagle")) {
-            alert("Not Found ~/.beagle folder. This extension will not work");
+            alert(_("beagle_check_env_error"));
             return false;
         }
         return true;
     },
 
-    /*
-    Check the page, 
-    1. the protocal (We will NOT index about:* file:///* )
-    2. check is the page  itself 
-    */
+    /**
+     * Check the page, 
+     * 1. the protocal (We will NOT index about:* file:///* )
+     * 2. check is the page  itself 
+     * TODO: for file:/// chrome:// and so on Index OR NOT
+     */
     checkPage : function(page)
     {
         if (!page)
@@ -243,8 +274,7 @@ var beagle = {
                     var pattern = list[i]['pattern'];
                     if (pattern[0] != '.')
                         pattern = "." + pattern;
-                    flag = hostname.isEndWith(pattern) || (hostname == list[i]['pattern']);
-                    //log("[check domain] is " + hostname + " end with " + pattern +" ? " + flag );
+                    flag = hostname.isEndWith(pattern) ||(hostname == list[i]['pattern']);
                     break;
                 case 'wildcard':
                     var re =  RegExp(list[i]['pattern'].wilcard2RE());
@@ -255,13 +285,14 @@ var beagle = {
                     flag = (page.location.href.match(re) != null)
                     break;
                 default:
+                    log("invaild rule" + list[i]); 
                     //something wrong;
                     break;
                 }
             }
             flags[j] = flag;
         }
-        log("[Should Index ? ] [exclude = "+flags[0] + "] [include = " + flags[1] + "]");
+        log("[Should Index ?][exclude=" + flags[0] + "][include=" + flags[1] + "]");
         if(!flags[0] && !flags[1])
             return prefObject['beagle.default.action'] == 1;
         if(flags[0] && flags[1])
@@ -269,12 +300,47 @@ var beagle = {
         return flags[1];
 
     },
+    
+    /**
+     * just set the status label 
+     */
+    setStatusLabel : function (msg)
+    {
+        setTimeout(
+            function(){document.getElementById('statusbar-display').label = msg},
+            100
+        );
+    },
+    
+    /**
+     * prompt extra keywords on demand-index
+     */
+    promptExtraKeywords : function(url)
+    {
+        if(this.pref.get("beagle.prompt.keywords.active"))
+        {
+            var prompts = Components.classes["@mozilla.org/embedcomp/prompt-service;1"]
+                                    .getService(Components.interfaces.nsIPromptService);
+            var input = { value: "" };
+            var chk = { value:false };
+            result = prompts.prompt(window, 
+                _("beagle_prompt_keywords_title"),
+                _("beagle_prompt_keywords_text"), input, null, chk);
+            if (result && input.value != "")
+            {
+                this.tasks[url]["meta"].push("t:dc:keyword="+ input.value);
+            }
+        }
+    },
 
-
+    /***************************************************
+     *        IO related code 
+     **************************************************/
 
     /**
-     write page content (NOT the HTML source, the DOM instead, it may include dym contnent created by js)
-    */
+     * write page content (NOT the HTML source, 
+     * the DOM instead, it may include dym contnent created by js)
+     */
     writeContent : function(page, tmpfilepath)
     {
         var tmpfile = Components.classes["@mozilla.org/file/local;1"].createInstance(Components.interfaces.nsILocalFile);
@@ -284,9 +350,11 @@ var beagle = {
         persist.persistFlags = this.PersistMask;
         persist.saveDocument(page, tmpfile, null, null, this.EncodeMask, 0);
     },
+
     /**
-    for non-html file . save it 
-    */
+     * for non-html and non-text file . save it 
+     * progressListener is used by index-link. to show the progree.
+     */
     saveFile : function(url,path,progressListener)
     {
         var tmpfile = Components.classes["@mozilla.org/file/local;1"].createInstance(Components.interfaces.nsILocalFile);
@@ -306,9 +374,10 @@ var beagle = {
             this.persist.progressListener = progressListener; 
         this.persist.saveURI(uri, cacheKey, hosturi, null, null, tmpfile);
     },
+
     /**
-     write raw-meatadata 
-    */
+     * write raw-meatadata 
+     */
     writeRawMetadata : function(meta, tmpfilepath)
     {
         var tmpfile = Components.classes["@mozilla.org/file/local;1"].createInstance(Components.interfaces.nsILocalFile);
@@ -332,8 +401,10 @@ var beagle = {
 
 
     /**
-     write meatadata  (include URI hittype mimetype characterset etc)
-    */
+     * write meatadata of page  
+     * include URI hittype mimetype characterset referrer 
+     * if any extra meta is set in task, write it too.
+     */
     writeMetadata : function(page, tmpfilepath)
     {
         var url = page.location.href;
@@ -351,76 +422,56 @@ var beagle = {
         beagle.writeRawMetadata(meta,tmpfilepath);
     },
 
-    /*
-     just set the status label 
-    */
-    setStatusLabel : function (msg)
-    {
-        setTimeout(function(){document.getElementById('statusbar-display').label = msg;},100);
-    },
-    
-    promptExtraKeywords : function(url)
-    {
-        //prompt for keywords.
-        if(this.pref.get("beagle.prompt.keywords.active"))
-        {
-            var prompts = Components.classes["@mozilla.org/embedcomp/prompt-service;1"]
-                                        .getService(Components.interfaces.nsIPromptService);
-            var input = { value: "" };
-            var chk = { value:false };
-            result = prompts.prompt(window, _("beagle_prompt_keywords_title"),_("beagle_prompt_keywords_text"), input, null, chk);
-            if (result)
-            {
-                this.tasks[url]["meta"].push("t:dc:keyword="+ input.value);
-            }
-        }
-    },
+    /**
+     * index a page 
+     * write content and meta
+     */
     indexPage : function(page)
     {
-
-        log(" We will index " + page.location.href ); 
+        var url = page.location.href;
+        log(" We will index " + url ); 
         
-        //save file content and metadats
-        var tmpdatapath = this.getContentPath(page.location.href);
-        var tmpmetapath = this.getMetaPath(page.location.href);
-            
         try {
-            this.writeContent(page, tmpdatapath);
-            this.writeMetadata(page, tmpmetapath);
+            this.writeContent(page, this.getContentPath(url));
+            this.writeMetadata(page, this.getMetaPath(url));
         } catch (ex) {
             log ("beaglePageLoad: beagleWriteContent/Metadata failed: " + ex );
             if(confirm(_('beagle_write_error_confirm')))
                 this.disable();
             return;
         }
-        this.setStatusLabel(_f("beagle_statuslabel_indexing",[page.location]));
-
+        this.setStatusLabel(_f("beagle_statuslabel_indexing",[url]));
     },
-
+    
+    /**
+     * index a file (non-html and non-text) 
+     * we assume the content is saved already.
+     * just write meta here
+     */
     indexFile : function(url,contentType)
     {
-
         log(" We will index " + url ); 
         
-        var tmpmetapath = this.getMetaPath(url);
         var meta = [url,'WebHistory',contentType];
-        if(this.tasks[url] && this.tasks[url]['meta'])
-        {
-            meta = meta.concat(this.tasks[url]['meta'])
-        }
+        meta = meta.concat(this.tasks[url]['meta'])
         try {
-            this.writeRawMetadata(meta, tmpmetapath);
+            this.writeRawMetadata(meta, this.getMetaPath(url));
         } catch (ex) {
             log ("[indexFile] beage write Metadata failed: " + ex + "\n");
             if(confirm(_('beagle_write_error_confirm')))
                 this.disable();
             return;
-            //    this.disable();
-            return;
         }
         this.setStatusLabel(_f("beagle_statuslabel_indexing",[url]));
     },
+    
+    /****************************************************************************
+     *                      Event Handlers 
+     ***************************************************************************/
 
+    /**
+     * index this page (event handler)
+     */
     indexThisPage : function()
     {
         var doc = document.getElementById('content').selectedBrowser.contentDocument;
@@ -440,35 +491,51 @@ var beagle = {
         }
     },
 
+    /**
+     * index link (event handler)
+     */
     indexLink : function()
     {
         var url = gContextMenu.linkURL; 
         if (!url)
             return;
-        //log("add meta referrer " + gBrowser.currentURI.spec );
-        this.tasks[url] = {
-            meta:["t:fixme:referrer=" + gBrowser.currentURI.spec],
-        };
+        var referrer = gBrowser.currentURI.spec;
+        this.startTask(url,
+            ["t:fixme:referrer=" + referrer]
+            );
         window.openDialog("chrome://newbeagle/content/indexLink.xul",
-            "","chrome,centerscreen,all,resizable,dialog=no",url);
+            "","chrome,centerscreen,all,resizable,dialog=no",url,referrer);
     },
-
+    /**
+     * index image (event handler)
+     */
     indexImage : function()
     {
         var image = gContextMenu.target; 
         if(image.tagName.toLowerCase() != 'img' || !image.src)
             return;
         var url = image.src;
-        this.startTasks(url,[
+        var referrer = gBrowser.currentURI.spec;
+        this.startTask(url,[
                 "t:alttext="+(image.getAttribute('alt')?image.getAttribute('alt'):""),
-                "t:fixme:referrer="+gBrowser.currentURI.spec]
+                "t:fixme:referrer="+referrer]
                 );
         window.openDialog("chrome://newbeagle/content/indexLink.xul",
-            "","chrome,centerscreen,all,resizable,dialog=no",url);
+            "","chrome,centerscreen,all,resizable,dialog=no",url,referrer);
     },
 
-    onLinkLoad : function(url,contentType,doc)
+    /**
+     * callback for link loaded  (called from indexLink.js)
+     * TODO: what if the url is no longer the url we passed to indexLink
+     */
+    onLinkLoad : function(url,contentType,doc,orginalURL)
     {   
+        if(url != orginalURL)
+        {
+            log(url)
+            log(orginalURL);
+            this.tasks[url] = this.tasks[orginalURL];
+        }
         this.promptExtraKeywords(url);
         if(contentType.match(/(text|html|xml)/i) && doc)// a document
         {
@@ -482,6 +549,9 @@ var beagle = {
         }
     },
 
+    /**
+     * called when page is loaded (event handler)
+     */
     onPageLoad : function(event)
     { 
         log("Page Loaded ");
@@ -508,31 +578,12 @@ var beagle = {
             this.indexFile(url,page.contentType);
         }
     },   
-
-    disable : function()
-    {
-        this.runStatus = this.RUN_DISABLED;
-        this.STATUS_ICON.setAttribute("status","00f");
-        this.STATUS_ICON.setAttribute("tooltiptext",_("beagle_tooltip_disabled"));
-        this.pref.set("beagle.autoindex.active",false);
-    },
-
-    enable : function()
-    {
-        this.runStatus = this.RUN_ENABLED;
-        this.STATUS_ICON.setAttribute("status","000");
-        this.STATUS_ICON.setAttribute("tooltiptext",_("beagle_tooltip_actived"));
-        this.pref.set("beagle.autoindex.active",true);
-    },
-
-    error : function(msg)
-    {
-        this.runStatus = this.RUN_ERROR;
-        this.STATUS_ICON.setAttribute("status","f00");
-        this.STATUS_ICON.setAttribute("tooltiptext",_f("beagle_tooltip_error",[msg]));
-        this.pref.set("beagle.autoindex.active",false);
-    },
-
+    
+        
+    /**
+     * add exclude /include rule
+     * the "domain" rule
+     */
     quickAddRule : function (page,flag)
     {
         try{
@@ -540,11 +591,13 @@ var beagle = {
             this.pref.addRule("qa_" + domain,domain,"domain",flag);
         }
         catch(e){
-            //alert("Error! Is this a site ?\n");
-            //pass
+            alert(_("beagle_quick_add_rule_error"));
         }
     },
 
+    /**
+     * show preference winodw (event handler)
+     */
     showPrefs : function()
     {
         window.openDialog('chrome://newbeagle/content/beaglePrefs.xul',
@@ -553,6 +606,10 @@ var beagle = {
                 'browser');
     },
 
+    /**
+     * status icon clicked. (event handler)
+     * toggle auto-index
+     */
     onIconClick : function(event)
     {
        // Left-click event (also single click, like Mac).
@@ -574,9 +631,10 @@ var beagle = {
             }
         }
     },
+
     /**
-    call beagle search by query 
-    */
+     * call beagle search by query 
+     */
     search : function(query)
     {
         if(!this.beagleSearchPath)
@@ -591,11 +649,44 @@ var beagle = {
                 alert("Caught error from beagle-search: " + e);
         }
     },
+    
+    /************************************************************
+     *  status switch functions
+     ************************************************************/
+    
+    /**
+     * disable beagle auto index
+     */
+    disable : function()
+    {
+        this.runStatus = this.RUN_DISABLED;
+        this.STATUS_ICON.setAttribute("status","00f");
+        this.STATUS_ICON.setAttribute("tooltiptext",_("beagle_tooltip_disabled"));
+        this.pref.set("beagle.autoindex.active",false);
+    },
+
+    /**
+     * enable beagle auto index
+     */
+    enable : function()
+    {
+        this.runStatus = this.RUN_ENABLED;
+        this.STATUS_ICON.setAttribute("status","000");
+        this.STATUS_ICON.setAttribute("tooltiptext",_("beagle_tooltip_actived"));
+        this.pref.set("beagle.autoindex.active",true);
+    },
+    
+    /**
+     * error occours
+     */
+    error : function(msg)
+    {
+        this.runStatus = this.RUN_ERROR;
+        this.STATUS_ICON.setAttribute("status","f00");
+        this.STATUS_ICON.setAttribute("tooltiptext",_f("beagle_tooltip_error",[msg]));
+        this.pref.set("beagle.autoindex.active",false);
+    },
 };
-
-
-
-
 
 // Create event listener.
 window.addEventListener('load', Function.bind(beagle.init,beagle),false); 
