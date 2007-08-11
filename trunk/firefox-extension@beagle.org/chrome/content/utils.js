@@ -1,31 +1,21 @@
 /*
- * Add A Row to a list (self)
+ * Add A Row to a list 
  * Param is string . Might be more than one .
  * Every param is a considered to be a cell .
  */
-Object.prototype.appendRow = function(){
-    listitem = document.createElement('listitem');
-    for(var i = 0; i< arguments.length; i++)
+function appendRow (){
+    var list = arguments[0];
+    var listitem = document.createElement('listitem');
+    for(var i = 1; i< arguments.length; i++)
     {
-        listcell = document.createElement('listcell');
+        var listcell = document.createElement('listcell');
         listcell.setAttribute('label',arguments[i]);
         listcell.setAttribute('value',arguments[i]);
         listitem.appendChild(listcell);
     }
-    this.appendChild(listitem);
+    list.appendChild(listitem);
 }
 
-/*
- * == documet.getElementById
- * @param  elementID The elementID or an element 
- */
-function $(elementID)
-{
-	if( typeof elementID == typeof "")
-   		return document.getElementById(elementID);
-	else
-		return elementID;
-}
 
 /*
  * check weather a string is end with another 

@@ -1,9 +1,8 @@
 /**
-index bookmarks.
-Include URL,name,shorcurURL (the keywords), description
-The folder name is not indexed.
-After a total index, a last-indexed-date is saved.
-Later only index the modified bookmark or new bookmarks.
+* index bookmarks.
+* Include URL,name,shorcurURL (the keywords), description
+* After index, a last-indexed-date is saved.
+* Later only index the modified bookmark or new bookmarks.
 */
 
 
@@ -22,7 +21,9 @@ if(!BMDS)
     initBMService();
 }
 
-
+/**
+ * a class for Bookmark
+ */
 function Bookmark(bmRes,path)
 {
     this.bmRes = bmRes;
@@ -47,16 +48,20 @@ Bookmark.prototype = {
     LastVisitDateArc:   RDF.GetResource(gWEB_NS + "LastVisitDate"),
     BookmarkAddDateArc:   RDF.GetResource(gNC_NS + "BookmarkAddDate"),
     
+    /**
+     * is bookmark newer than lastIndexDate
+     */
     isModified: function(lastIndexDate)
     {   
         var last_modified = this.LastModifiedDate;
         if (!last_modified)
             last_modified = this.BookmarkAddDate;
-        //log("bookmark isModified " + last_modified  + " > " + lastIndexDate + "?");
         return last_modified && last_modified > lastIndexDate;
     },
-    
-    //TODO:is it ok?
+
+    /**
+     * folder / seperator / livebookmark  are not "bookmark"
+     */
     isBookmark: function()
     {
         var parent = BMSVC.getParent(this.bmRes);
@@ -66,6 +71,7 @@ Bookmark.prototype = {
             return false;
         return !!this.URL;
     },
+
     getLiteral:function(arc) 
     {
         try{
@@ -76,6 +82,7 @@ Bookmark.prototype = {
         } catch (e) { /* probably a bad interface */ }
         return null;
     },
+
     getDate:function(arc) 
     {
         try{
@@ -86,6 +93,10 @@ Bookmark.prototype = {
         } catch (e) { /* probably a bad interface */ }
         return null;
     },
+
+    /**
+     * get children bookmarks 
+     */
     getChildren:function()
     {
         var container = Components.classes["@mozilla.org/rdf/container;1"]
@@ -104,8 +115,11 @@ Bookmark.prototype = {
 
 var bookmarkIndexer = {
     
-    //get the bookmark  one by one 
-    //if filter(bookmark) == true do action(bookmark)
+    /**
+     * get the bookmark  one by one 
+     * if filter(bookmark) == true do action(bookmark)
+     * return the num of indexed bookmarks
+     */
     walk: function(bm,filter,action)
     {
         var num = 0;
@@ -129,10 +143,11 @@ var bookmarkIndexer = {
         }
         return num;
     },
+    
     /**
-    Index a bookmark.
-    write meta to metafile and write a empty content file
-    */
+     * Index a bookmark.
+     * write meta to metafile and write a empty content file
+     */
     indexBookmark: function(bookmark)
     {
         log("index bookmark " + bookmark.URL );
@@ -155,10 +170,11 @@ var bookmarkIndexer = {
         // a little hack , write empty content to content file
         beagle.writeRawMetadata([],beagle.getContentPath(bookmark.URL,"bookmark"));
     },
+    
     /**
-    Index all the bookmarks. 
-    It is not used.
-    */
+     * Index all the bookmarks. 
+     * It is not used.
+     */
     indexAll:function()
     {
         this.walk(
@@ -167,13 +183,14 @@ var bookmarkIndexer = {
         );
         beaglePref.set("beagle.bookmark.last.indexed.date","" + (new Date()).getTime());
     },
+    
     /**
-    Index the modifled (or new ) bookmarks.
-    */
+     * Index the modifled (or new ) bookmarks.
+     * if report is true , alert the num of indexed bookmarks
+     */
     indexModified:function(report)
     {
         var root = new Bookmark(RDF.GetResource("NC:BookmarksRoot"),"");
-        log(root);
         var lastIndexDate = beaglePref.get("beagle.bookmark.last.indexed.date");
         var num = this.walk(
             root,
