@@ -26,7 +26,7 @@ import os
 import ConfigParser
 import re
 import string
-
+import mimetypes
 #The following is about config
 class Config(dict):
     def __getattr__(self, name):
@@ -108,6 +108,11 @@ _ui_str = """
    <separator/>
   </menu>
  </menubar>
+ <popup name="EphyLinkPopup" action="PopupAction">
+  <separator />
+  <menuitem name="IndexLink" 
+    action="PyBeagleExtIndexLinkAction"/>
+ </popup>
 </ui>
 """
 
@@ -140,32 +145,23 @@ def _toggle_auto_cb(action,window):
         config.auto_index = action.get_active()
         save(config_file_path, config)
 
+def _index_link_cb(action,window):
+    print "_index_link_cb"
+    event = window.get_context_event()
+    if event is None:
+        return
+    value = event.get_event_property("link")
+    index_link(value)
+    set_status_label(window,"beagle is indexing %s" %value)
+    pass
 
-# This is to pass to gtk.ActionGroup.add_actions()
-_actions = [
-        ('BeagleMenuAction',None,'Beagle',None,None,None),
-        ('PyBeagleExtIndexThisPageAction', None,
-	     'Index This Page', None, None, _index_this_page_cb),
-	   ]
-_toggle_actions = [
-        ("PyBeagleExtAutoAction",None,
-         "Auto Index",None,None,_toggle_auto_cb)
-]
-
-def set_status_label(window,msg):
-    statusbar = window.get_statusbar()
-    context_id = statusbar.get_context_id("beagle")
-    statusbar.pop(context_id)
-    statusbar.push(context_id,msg)
-
-
-def load_status_cb(tab,event,window):
+def _load_status_cb(tab,event,window):
     '''
     Callback for load_status chanage
     the load_status == false means the page is loaded.
     So we will do our job 
     '''
-    print "beagle in load_status_cb"
+    print "beagle in _load_status_cb"
     print "update action "
     _update_action(window)
     if not config.auto_index:
@@ -179,8 +175,28 @@ def load_status_cb(tab,event,window):
             print url + " will NOT be indexed.\n"
             return
         print "beagle will index " +  url
-        index_embed(embed)
+        index_embed(embed,content_type)
         set_status_label(window,"beagle will index " + url)
+
+# This is to pass to gtk.ActionGroup.add_actions()
+_actions = [
+        ('BeagleMenuAction',None,'Beagle',None,None,None),
+        ('PyBeagleExtIndexThisPageAction', None,
+	     'Index This Page', None, None, _index_this_page_cb),
+	    ('PyBeagleExtIndexLinkAction',None,
+         'Index Link', None, None, _index_link_cb),
+	   ]
+_toggle_actions = [
+        ("PyBeagleExtAutoAction",None,
+         "Auto Index",None,None,_toggle_auto_cb)
+]
+
+def set_status_label(window,msg):
+    statusbar = window.get_statusbar()
+    context_id = statusbar.get_context_id("beagle")
+    statusbar.pop(context_id)
+    statusbar.push(context_id,msg)
+
 
 def should_index(url):
     url = url.lower()
@@ -204,31 +220,69 @@ def index_embed(embed):
     url = embed.get_location(True)
     print "beagle index embed " + url
     md5_hash = md5.new(url).hexdigest() 
-    beagle_content_path = beagle_data_path + "epiphany-" + md5_hash + ".htm"
-    beagle_meta_path = beagle_data_path + ".epiphany-" + md5_hash + ".htm"
+    beagle_content_path = beagle_data_path + "epiphany-" + md5_hash 
+    beagle_meta_path = beagle_data_path + ".epiphany-" + md5_hash
     write_content(embed,beagle_content_path)
-    write_meta(embed,beagle_meta_path)
+    write_raw_meta(get_metas_from_embed(embed),beagle_meta_path)
+
+def index_link(url):
+    md5_hash = md5.new(url).hexdigest() 
+    beagle_content_path = beagle_data_path + "epiphany-" + md5_hash 
+    beagle_meta_path = beagle_data_path + ".epiphany-" + md5_hash
+    write_file(url,beagle_content_path)
+    write_raw_meta(get_metas_from_url(url),beagle_meta_path)
+
+def write_file(url,path):
+    print "write file %s to %s " %(url,path)
+    persist = epiphany.ephy_embed_factory_new_object("EphyEmbedPersist")
+    persist.set_flags(epiphany.EMBED_PERSIST_NO_VIEW)
+    persist.set_source(url)
+    persist.set_dest(path)
+    def save_completed_cb(persist,url):
+        print "save completed for %s" %url
+    persist.connect("completed",save_completed_cb,url)
+    persist.save()
 
 def write_content(embed,path):
     persist = epiphany.ephy_embed_factory_new_object("EphyEmbedPersist")
-    persist.set_embed(embed)
-    persist.set_dest(path)
     persist.set_flags(epiphany.EMBED_PERSIST_NO_VIEW 
                     |epiphany.EMBED_PERSIST_COPY_PAGE 
                     |epiphany.EMBED_PERSIST_MAINDOC
                     |epiphany.EMBED_PERSIST_FROM_CACHE)
-
+    persist.set_embed(embed)
+    persist.set_dest(path)
     persist.save()
 
-def write_meta(embed,path):
-    url = embed.get_location(True)
+def get_metas_from_url(url):
+    return [
+        url,
+        "WebHistory",
+        guess_content_type(url),
+    ]
+
+def get_metas_from_embed(embed):
+    return [
+        embed.get_location(True),
+        "WebHistory",
+        guess_content_type(url),
+        "k:_uniddexed:encoding="+embed.get_encoding()
+    ]
+
+def write_raw_meta(metas,path):
     meta_file = open(path,'w')
-    meta_file.write(url + '\n')
-    meta_file.write("WebHistory\n")
-    meta_file.write("text/html\n")
-    meta_file.write("k:_uniddexed:encoding="+embed.get_encoding() + "\n")
+    for meta in metas:
+        meta_file.write(meta + '\n')
     meta_file.close()
 
+#guess content type
+#that's not reliabe. but I found no API to get the contenttype
+def guess_content_type(url):
+    type,encoding = mimetypes.guess_type(url)
+    if type is None:
+       return ""
+    else:
+       return type
+ 
 #Implement epiphany extension interface
 
 def attach_window(window):
@@ -261,7 +315,7 @@ def detach_window(window):
 
 
 def attach_tab(window,tab):
-    sig = tab.connect("notify::load-status",load_status_cb,window)
+    sig = tab.connect("notify::load-status",_load_status_cb,window)
     tab._python_load_status_sig = sig
 
 def detach_tab(window,tab):
