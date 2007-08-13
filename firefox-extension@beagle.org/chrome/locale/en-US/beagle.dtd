@@ -4,11 +4,9 @@
 <!ENTITY beagle.context.search.page.label           "Find References to this Page">
 
 <!ENTITY beagle.pref.label                          "Beagle Preferences">
-<!ENTITY beagle.pref.context.label                  "Context Menu Options">
-<!ENTITY beagle.pref.context.active.label           "Add Beagle options to context menu">
 <!ENTITY beagle.pref.security.active.label          "Index pages with secure content">
 <!ENTITY beagle.pref.bookmark.active.label          "Index bookmarks when close the window">
-<!ENTITY beagle.pref.prompt.keywords.active.label    "Prompt for keywords when indexing on demand">
+<!ENTITY beagle.pref.prompt.keywords.active.label   "Prompt for keywords when indexing on demand">
 <!ENTITY beagle.pref.default.action.label           "Default Action">
 <!ENTITY beagle.pref.default.action.tooltip         "What to do When the URL doesn't match any rule">
 <!ENTITY beagle.pref.conflict.action.label          "Conflict Action">
@@ -24,9 +22,6 @@
 <!ENTITY beagle.pref.filter.add.label		        "Add">
 <!ENTITY beagle.pref.filter.edit.label              "Edit">
 <!ENTITY beagle.pref.filter.remove.label            "Remove">
-<!ENTITY beagle.pref.export.label                   "Export">
-<!ENTITY beagle.pref.import.label                   "Import">
-<!ENTITY beagle.pref.importold.label                "Import From Old Extension">
 <!ENTITY beagle.pref.help.label                     "Help">
 <!ENTITY beagle.pref.save.label                     "Save">
 <!ENTITY beagle.pref.cancel.label                   "Cancel">
@@ -38,8 +33,6 @@
 <!ENTITY beagle.run.context.menu.label              "Beagle">
 <!ENTITY beagle.run.index.link.label                "Index This Link">
 <!ENTITY beagle.run.index.image.label               "Index This Image">
-<!ENTITY beagle.context.search.link.label           "Find References to this Link">
-<!ENTITY beagle.context.search.page.label           "Find References to this Page">
 <!ENTITY beagle.index.link.start.label              "Start">
 <!ENTITY beagle.index.link.stop.label               "Stop">
 

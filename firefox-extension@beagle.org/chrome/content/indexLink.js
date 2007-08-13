@@ -266,7 +266,7 @@ headerSniffer.prototype = {
      * cancel sniff 
      * I didn't find any way to stop the request ?
      * So here  we will just remove the callback function
-    */
+     */
     cancel : function()
     {
         log("sniff canceled");
