@@ -7,7 +7,7 @@
 <window id="beagle-pref"
     buttons="accept,cancel,help" 
     onload="beaglePref.init();" 
-    persist="screenX screenY width height"
+    persist="screenX screenY"
     title="&beagle.pref.label;"
     flex="1"
     style="min-width:500px"
@@ -30,7 +30,8 @@
     <script type="text/javascript" src="i18n.js" />
     
     <script type="text/javascript" src="beaglePrefs.js" />
-      
+    
+    
     <groupbox>
         <caption label="&beagle.pref.groupbox.general.label;" />
         <!--checkbox 

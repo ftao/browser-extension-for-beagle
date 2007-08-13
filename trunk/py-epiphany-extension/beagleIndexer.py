@@ -27,6 +27,16 @@ import ConfigParser
 import re
 import string
 import mimetypes
+import gettext
+
+#these are constant
+beagle_data_path = os.environ["HOME"] + "/.beagle/ToIndex/"
+config_file_path = os.environ["HOME"] + "/.gnome2/epiphany/extensions/beagleIndexer.conf"
+locale_dir_path = os.environ["HOME"] + "/.gnome2/epiphany/extensions/locale"
+
+#i18n init
+gettext.install('py_beagle_for_epiphany', locale_dir_path)
+
 #The following is about config
 class Config(dict):
     def __getattr__(self, name):
@@ -76,9 +86,6 @@ def save(fullpath,config):
     outfile.close()
 
 
-#these are constant
-beagle_data_path = os.environ["HOME"] + "/.beagle/ToIndex/"
-config_file_path = os.environ["HOME"] + "/.gnome2/epiphany/extensions/beagleIndexer.conf"
 
 #default config value
 _ConfigDefault = {
@@ -108,6 +115,10 @@ _ui_str = """
    <separator/>
   </menu>
  </menubar>
+ <popup name="EphyDocumentPopup" action="PopupAction">
+    <menuitem name="PyBeagleExtIndexThisPagePopup"
+      action="PyBeagleExtIndexThisPageAction"/>
+ </popup>
  <popup name="EphyLinkPopup" action="PopupAction">
   <separator />
   <menuitem name="IndexLink" 
@@ -135,7 +146,7 @@ def _index_this_page_cb(action, window):
     tab = window.get_active_tab()
     embed = tab.get_embed()
     index_embed(embed)
-    set_status_label(window,"beagle will index " + embed.get_location(True))
+    set_status_label(window,"beagle will indexing %s" % embed.get_location(True))
 
 def _toggle_auto_cb(action,window):
     print "toggle auto index"
@@ -172,23 +183,23 @@ def _load_status_cb(tab,event,window):
         embed = tab.get_embed()
         url = embed.get_location(True)
         if should_index(url) == False:
-            print url + " will NOT be indexed.\n"
+            print "%s will NOT be indexed." % url
             return
-        print "beagle will index " +  url
-        index_embed(embed,content_type)
-        set_status_label(window,"beagle will index " + url)
+        print "beagle will index %s" % url
+        index_embed(embed)
+        set_status_label(window,"beagle will index %s " % url)
 
 # This is to pass to gtk.ActionGroup.add_actions()
 _actions = [
         ('BeagleMenuAction',None,'Beagle',None,None,None),
         ('PyBeagleExtIndexThisPageAction', None,
-	     'Index This Page', None, None, _index_this_page_cb),
+	     _('Index This Page'), None, None, _index_this_page_cb),
 	    ('PyBeagleExtIndexLinkAction',None,
-         'Index Link', None, None, _index_link_cb),
+         _('Index Link'), None, None, _index_link_cb),
 	   ]
 _toggle_actions = [
         ("PyBeagleExtAutoAction",None,
-         "Auto Index",None,None,_toggle_auto_cb)
+         _("Auto Index"),None,None,_toggle_auto_cb)
 ]
 
 def set_status_label(window,msg):
@@ -261,8 +272,9 @@ def get_metas_from_url(url):
     ]
 
 def get_metas_from_embed(embed):
+    url = embed.get_location(True)
     return [
-        embed.get_location(True),
+        url,
         "WebHistory",
         guess_content_type(url),
         "k:_uniddexed:encoding="+embed.get_encoding()

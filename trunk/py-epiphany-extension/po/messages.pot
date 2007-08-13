@@ -1,0 +1,29 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2007 Tao Fei 
+# Tao Fei <filia.tao@gmail.com>, 2007.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"POT-Creation-Date: 2007-08-13 11:29+CST\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=CHARSET\n"
+"Content-Transfer-Encoding: ENCODING\n"
+"Generated-By: pygettext.py 1.5\n"
+
+
+#: beagleIndexer.py:192
+msgid "Index This Page"
+msgstr ""
+
+#: beagleIndexer.py:194
+msgid "Index Link"
+msgstr ""
+
+#: beagleIndexer.py:198
+msgid "Auto Index"
+msgstr ""
+
