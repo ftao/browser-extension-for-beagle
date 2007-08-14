@@ -52,7 +52,7 @@ beagleInvisibleBrowser = {
             Function.bind(this.onGetResponseError,this)
         );
         this.sniffer.httpHead();
-        this.STATUS_ELEMENT.value = "Connecting... " + url;
+        this.STATUS_ELEMENT.value = _f("beagle_index_link_connect",[url]);
     },
 
     /**

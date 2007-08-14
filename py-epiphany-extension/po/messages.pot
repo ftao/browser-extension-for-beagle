@@ -1,11 +1,11 @@
 # SOME DESCRIPTIVE TITLE.
-# Copyright (C) 2007 Tao Fei 
+# Copyright (C) YEAR ORGANIZATION
 # Tao Fei <filia.tao@gmail.com>, 2007.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
-"POT-Creation-Date: 2007-08-13 11:29+CST\n"
+"POT-Creation-Date: 2007-08-14 13:34+CST\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -15,15 +15,23 @@ msgstr ""
 "Generated-By: pygettext.py 1.5\n"
 
 
-#: beagleIndexer.py:192
+#: beagleIndexer.py:153
+msgid "beagle is indexing %s"
+msgstr ""
+
+#: beagleIndexer.py:170
+msgid "beagle is indexing link %s"
+msgstr ""
+
+#: beagleIndexer.py:200
 msgid "Index This Page"
 msgstr ""
 
-#: beagleIndexer.py:194
+#: beagleIndexer.py:202
 msgid "Index Link"
 msgstr ""
 
-#: beagleIndexer.py:198
+#: beagleIndexer.py:206
 msgid "Auto Index"
 msgstr ""
 

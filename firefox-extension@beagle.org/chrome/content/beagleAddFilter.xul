@@ -7,8 +7,7 @@
 
 <dialog id="beagle.addPattern"
   buttons="accept,cancel"
-  buttonlabelaccept="Add"
-  title="Add Rule"
+  title="&beagle.pref.filter.add.dlg.title;"
   ondialogaccept="beaglePrefsAddFilterClicked();"
   xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul">
   
@@ -24,18 +23,20 @@
 	</columns>
     <rows>
 		<row>
-			<label>Name:</label><textbox id="beagle.add.filter.name" />
-		</row>
+            <label>&beagle.pref.filter.name.label;</label><textbox id="beagle.add.filter.name" />
+        </row>
+        <row>
+			<label>&beagle.pref.filter.patterntype.label;</label>
+            <menulist id="beagle.add.filter.patterntype">
+                <menupopup>
+                    <menuitem value="domain" label="domain" />
+                    <menuitem value="wildcard"  label="wildcard"/>
+                    <menuitem value="regular expression" label="regular expression"/>
+                </menupopup>
+            </menulist>
+        </row>
 		<row>
-			<label>Type:</label>
-            <radiogroup id="beagle.add.filter.patterntype" orient="vertical">
-            <radio value="domain" label="domain" selected="true"/>
-			<radio value="wildcard"  label="wildcard"/>
-			<radio value="regular expression" label="regular expression"/>
-			</radiogroup>
-		</row>
-		<row>
-			<label>Pattern:</label><textbox id="beagle.add.filter.pattern" />
+			<label>&beagle.pref.filter.pattern.label;</label><textbox id="beagle.add.filter.pattern" />
 		</row>
 	</rows>
 </grid>
