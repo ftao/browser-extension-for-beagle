@@ -3,7 +3,7 @@ Name=Beagle Indexer
 Description=Index the pages you visited
 Authors=Tao Fei
 Version=1
-URL=http://no.url.yet/
+URL=http://beagle-project.org/Browser_Extension#Epiphany_Extension
 
 
 [Loader]

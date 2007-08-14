@@ -32,10 +32,6 @@ import gettext
 #these are constant
 beagle_data_path = os.environ["HOME"] + "/.beagle/ToIndex/"
 config_file_path = os.environ["HOME"] + "/.gnome2/epiphany/extensions/beagleIndexer.conf"
-locale_dir_path = os.environ["HOME"] + "/.gnome2/epiphany/extensions/locale"
-
-#i18n init
-gettext.install('py_beagle_for_epiphany', locale_dir_path)
 
 #The following is about config
 class Config(dict):
@@ -100,6 +96,12 @@ _ConfigDefault = {
 #load config
 config = load(config_file_path,_ConfigDefault)
 
+#i18n init
+try:
+    gettext.install('py_beagle_for_epiphany',config.locale_dir_path)
+except:
+    gettext.install('py_beagle_for_epiphany')
+
 #The following code is about menu item 
 _ui_str = """
 <ui>
@@ -146,7 +148,7 @@ def _index_this_page_cb(action, window):
     tab = window.get_active_tab()
     embed = tab.get_embed()
     index_embed(embed)
-    set_status_label(window,"beagle will indexing %s" % embed.get_location(True))
+    set_status_label(window,_("beagle is indexing %s") % embed.get_location(True))
 
 def _toggle_auto_cb(action,window):
     print "toggle auto index"
@@ -163,7 +165,7 @@ def _index_link_cb(action,window):
         return
     value = event.get_event_property("link")
     index_link(value)
-    set_status_label(window,"beagle is indexing %s" %value)
+    set_status_label(window,_("beagle is indexing link %s") %value)
     pass
 
 def _load_status_cb(tab,event,window):

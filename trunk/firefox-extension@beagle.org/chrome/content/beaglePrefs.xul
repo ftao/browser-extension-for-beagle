@@ -79,9 +79,9 @@
         <vbox flex="1">
         <listbox flex="1" rows="4" id="beagle.include.list">
         <listhead>
-            <listheader id="includeName" label="Name" />
-            <listheader id="includePattern" label="Pattern" />
-            <listheader id="includePatternType" label="Type" />
+            <listheader id="includeName" label="&beagle.pref.filter.name.label;" />
+            <listheader id="includePattern" label="&beagle.pref.filter.pattern.label;" />
+            <listheader id="includePatternType" label="&beagle.pref.filter.patterntype.label;" />
         </listhead>
         <listcols>
             <listcol />
@@ -105,9 +105,9 @@
         <vbox flex="1">
         <listbox flex="1" rows="4" id="beagle.exclude.list">
         <listhead>
-            <listheader id="excludeName" label="Name" />
-            <listheader id="excludePattern" label="Pattern" />
-            <listheader id="excludePatternType" label="Type" />
+            <listheader id="excludeName" label="&beagle.pref.filter.name.label;" />
+            <listheader id="excludePattern" label="&beagle.pref.filter.pattern.label;" />
+            <listheader id="excludePatternType" label="&beagle.pref.filter.patterntype.label;" />
         </listhead>
         <listcols>
             <listcol />

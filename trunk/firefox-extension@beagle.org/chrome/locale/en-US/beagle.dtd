@@ -1,5 +1,3 @@
-<!ENTITY beagle.context.menu.label                  "Beagle">
-<!ENTITY beagle.context.prefs.label                 "Beagle Preferences">
 <!ENTITY beagle.context.search.link.label           "Find References to this Link">
 <!ENTITY beagle.context.search.page.label           "Find References to this Page">
 
@@ -20,8 +18,8 @@
 <!ENTITY beagle.pref.filter.pattern.label           "Pattern">
 <!ENTITY beagle.pref.filter.patterntype.label       "PatternType">
 <!ENTITY beagle.pref.filter.add.label		        "Add">
-<!ENTITY beagle.pref.filter.edit.label              "Edit">
 <!ENTITY beagle.pref.filter.remove.label            "Remove">
+<!ENTITY beagle.pref.filter.add.dlg.title           "Add Rule">
 <!ENTITY beagle.pref.help.label                     "Help">
 <!ENTITY beagle.pref.save.label                     "Save">
 <!ENTITY beagle.pref.cancel.label                   "Cancel">

@@ -181,14 +181,6 @@ var beaglePref = {
                 log(this.prefObject[elementID]);
             }
         }
-        //if there are old extension's pref   enable the import-from-old button 
-        try{
-            if (gPrefService.getCharPref("beagle.security.filters"))
-                document.getElementById('beagle.import.from.old').disabled = false;
-        }
-        catch(ex){
-            log(ex);
-        }
      
     },
 
@@ -254,13 +246,13 @@ var beaglePref = {
     },
 
     /**
-     * add a filter 
+     * open a dialog to add a filter 
      */
     onAddFilter : function (type)
     {
         window.openDialog(
             'chrome://newbeagle/content/beagleAddFilter.xul',
-            _f("beagle_pref_add_filter_dlgname",[type]), 
+            "add_filter_dialog", 
             'chrome, modal',
             type
         );
