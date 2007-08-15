@@ -136,40 +136,41 @@ _ui_str = """
 </ui>
 """
 
+
 # we use window.get_active_tab(): we want the menu entries to reflect the active
 # tab, not necessarily the one which fired a signal.
 def _update_action(window):
-	index_this_page_action = window.get_ui_manager().get_action('/menubar/ToolsMenu/BeagleMenu/PyBeagleExtIndexThisPage')
+    '''update action for PyBeagleExtIndexThisPage (enabe after page loaded)'''
+    index_this_page_action = window.get_ui_manager().get_action('/menubar/ToolsMenu/BeagleMenu/PyBeagleExtIndexThisPage')
+    tab = window.get_active_tab()
+    # Tab is None when a window is first opened
+    sensitive = (tab != None and tab.get_load_status() != True)
+    index_this_page_action.set_sensitive(sensitive)
 
-	tab = window.get_active_tab()
-
-	# Tab is None when a window is first opened
-	sensitive = (tab != None and tab.get_load_status() != True)
-	index_this_page_action.set_sensitive(sensitive)
-
-#update the action (index this page ) when swith page 
 def _switch_page_cb(notebook, page, page_num, window):
-	_update_action(window)
+    '''update the action (index this page ) when swith page'''
+    _update_action(window)
 
 def _index_this_page_cb(action, window):
+    '''callback for index_this_page action'''
     tab = window.get_active_tab()
     embed = tab.get_embed()
-    index_embed(embed)
+    index_embed(tab,embed,True)
     set_status_label(window,_("beagle is indexing %s") % embed.get_location(True))
 
 def _toggle_auto_cb(action,window):
-    print "toggle auto index"
+    '''enable/diable auto index '''
     if config.auto_index != action.get_active():
         config.auto_index = action.get_active()
         save(config_file_path, config)
 
 def _toggle_prompt_keywords_cb(action,window):
-    print "toggle prompt keyword"
+    '''enable/diable prompt for keyword'''
     if config.prompt_keyword != action.get_active():
         config.prompt_keyword = action.get_active()
 
 def _index_link_cb(action,window):
-    print "_index_link_cb"
+    '''callback for index_link action'''
     event = window.get_context_event()
     if event is None:
         return
@@ -184,8 +185,6 @@ def _load_status_cb(tab,event,window):
     the load_status == false means the page is loaded.
     So we will do our job 
     '''
-    print "beagle in _load_status_cb"
-    print "update action "
     _update_action(window)
     if not config.auto_index:
         print "Auto Index is turned off. No index "
@@ -197,11 +196,11 @@ def _load_status_cb(tab,event,window):
         if should_index(url) == False:
             print "%s will NOT be indexed." % url
             return
-        print "beagle will index %s" % url
-        index_embed(embed)
+        index_embed(tab,embed,False)
         set_status_label(window,"beagle will index %s " % url)
 
 def _reload_config_cb(action,window):
+    '''reaload config file '''
     config = load(config_file_path,_ConfigDefault)
     init_ui(window)
 
@@ -223,21 +222,24 @@ _toggle_actions = [
          _("Prompt key words when index on demand"),None,None,_toggle_prompt_keywords_cb),
 ]
 
+
 def set_status_label(window,msg):
+    '''set status label with msg'''
     statusbar = window.get_statusbar()
     context_id = statusbar.get_context_id("beagle")
     statusbar.pop(context_id)
     statusbar.push(context_id,msg)
 
 def init_ui(window):
+    '''ui set auto-index and prompt-keyword action to active/no-active'''
     auto_index_action = window.get_ui_manager().get_action('/menubar/ToolsMenu/BeagleMenu/PyBeagleExtAuto')
     auto_index_action.set_active(config.auto_index)
     prompt_keyword_action = window.get_ui_manager().get_action('/menubar/ToolsMenu/BeagleMenu/PyBeagleExtPromptKeyword')
-    prompt_keyword_action.set_active(config.auto_index)
+    prompt_keyword_action.set_active(config.prompt_keyword)
 
 def prompt_for_keyword():
-    dialog = gtk.Dialog("My dialog",None,
-          gtk.DIALOG_MODAL,
+    '''open a dialgo , ask for extra keyword to index'''
+    dialog = gtk.Dialog("Keywords",None,gtk.DIALOG_MODAL,
           (gtk.STOCK_CANCEL, gtk.RESPONSE_REJECT, gtk.STOCK_OK, gtk.RESPONSE_ACCEPT)
           )
     dialog.set_default_response(gtk.RESPONSE_ACCEPT)
@@ -257,6 +259,7 @@ def prompt_for_keyword():
     return ret
 
 def should_index(url):
+    '''check weahter we should index the url'''
     url = url.lower()
     if not config.index_https and url.find("https") == 0:
         return False
@@ -264,45 +267,48 @@ def should_index(url):
     for item in config.black_list:
         if re.match(item,url):
             in_blacklist = True
+            break
     in_whitelist = False
     for item in config.white_list:
         if re.match(item,url):
             in_whitelist = True
+            break
     if in_blacklist and in_whitelist:
         return config.default_index
     if (not in_blacklist) and (not in_whitelist):
         return config.white_list_first
     return in_whitelist
 
-def index_embed(embed,ondemand=True):
+def index_embed(tab,embed,ondemand=True):
+    '''index the page (in tab,embed)'''
     url = embed.get_location(True)
     print "beagle index embed " + url
     md5_hash = md5.new(url).hexdigest() 
     beagle_content_path = beagle_data_path + "epiphany-" + md5_hash 
     beagle_meta_path = beagle_data_path + ".epiphany-" + md5_hash
-    write_content(embed,beagle_content_path)
-    extra_meta = []
+    write_content(embed, beagle_content_path)
+    meta = get_meta_from_embed(url,embed,tab) 
     if ondemand and config.prompt_keyword:
         keywords = prompt_for_keyword()
-        print keywords
         if keywords != "":
-            extra_meta.append("t:dc:keyword:%s" % keywords)
-    write_raw_meta(get_metas_from_embed(embed) + extra_meta,beagle_meta_path)
+            meta.append("t:dc:keyword:%s" % keywords)
+    write_raw_meta(meta, beagle_meta_path)
 
-def index_link(url,ondemand=True):
+def index_link(url, ondemand=True):
+    '''index the linked file'''
     md5_hash = md5.new(url).hexdigest() 
     beagle_content_path = beagle_data_path + "epiphany-" + md5_hash 
     beagle_meta_path = beagle_data_path + ".epiphany-" + md5_hash
-    write_file(url,beagle_content_path)
-    extra_meta = []
+    write_file(url, beagle_content_path)
+    meta = get_meta_from_url(url) 
     if ondemand and config.prompt_keyword:
         keywords = prompt_for_keyword()
-        print keywords
         if keywords != "":
-            extra_meta.append("t:dc:keyword:%s" % keywords)
-    write_raw_meta(get_metas_from_url(url) + extra_meta,beagle_meta_path)
+            meta.append("t:dc:keyword:%s" % keywords)
+    write_raw_meta(meta, beagle_meta_path)
 
 def write_file(url,path):
+    '''save file from url to path'''
     print "write file %s to %s " %(url,path)
     persist = epiphany.ephy_embed_factory_new_object("EphyEmbedPersist")
     persist.set_flags(epiphany.EMBED_PERSIST_NO_VIEW)
@@ -314,6 +320,7 @@ def write_file(url,path):
     persist.save()
 
 def write_content(embed,path):
+    '''write embed to path'''
     persist = epiphany.ephy_embed_factory_new_object("EphyEmbedPersist")
     persist.set_flags(epiphany.EMBED_PERSIST_NO_VIEW 
                     |epiphany.EMBED_PERSIST_COPY_PAGE 
@@ -323,40 +330,59 @@ def write_content(embed,path):
     persist.set_dest(path)
     persist.save()
 
-def get_metas_from_url(url):
+def get_meta_from_url(url):
+    '''get mata data from url , the cotnent type is "guessed"'''
     return [
         url,
         "WebHistory",
         guess_content_type(url),
     ]
 
-def get_metas_from_embed(embed):
-    url = embed.get_location(True)
+def get_meta_from_embed(url,embed,tab):
+    '''get mata data from embed "'''
+    #guess content type here
+    content_type = ""
+    doc_type = tab.get_document_type()
+    if doc_type == epiphany.EMBED_DOCUMENT_HTML:
+        content_type = "text/html"
+    elif doc_type == epiphany.EMBED_DOCUMENT_XML:
+        content_type = "text/xml"
+    else:
+        content_type = guess_content_type(url)
     return [
         url,
         "WebHistory",
-        guess_content_type(url),
-        "k:_uniddexed:encoding="+embed.get_encoding()
+        content_type,
+        "k:_unindexed:encoding="+embed.get_encoding()
     ]
 
 def write_raw_meta(metas,path):
+    '''write raw meta'''
     meta_file = open(path,'w')
     for meta in metas:
         meta_file.write(meta + '\n')
     meta_file.close()
 
-#guess content type
-#that's not reliabe. but I found no API to get the contenttype
 def guess_content_type(url):
+    '''guess content type
+    that's not reliabe. but I found no API to get the contenttype
+    '''
     type,encoding = mimetypes.guess_type(url)
     if type is None:
        return ""
     else:
        return type
- 
+
+def check_env():
+    '''check environment , just make sure there is ~/.beagle/ToIndex'''
+    return os.path.isdir(beagle_data_path)
+
 #Implement epiphany extension interface
 
 def attach_window(window):
+    if not check_env():
+        print "Not Found Beagle"
+        return
     ui_manager = window.get_ui_manager()
     group = gtk.ActionGroup('PyBeagleExt')
     group.add_actions(_actions, window)
@@ -371,19 +397,22 @@ def attach_window(window):
 
 def detach_window(window):
     notebook = window.get_notebook()
-    notebook.disconnect(notebook._py_beagle_sig)
-    del notebook._py_beagle_sig
-
-    group, ui_id = window._py_beagle_window_data
-    del window._py_beagle_window_data
-
-    ui_manager = window.get_ui_manager()
-    ui_manager.remove_ui(ui_id)
-    ui_manager.remove_action_group(group)
-    ui_manager.ensure_update()
+    if hasattr(notebook,"_py_beagle_sig"):
+        notebook.disconnect(notebook._py_beagle_sig)
+        del notebook._py_beagle_sig
+    if hasattr(window,"_py_beagle_window_data"):
+        group, ui_id = window._py_beagle_window_data
+        del window._py_beagle_window_data
+        ui_manager = window.get_ui_manager()
+        ui_manager.remove_ui(ui_id)
+        ui_manager.remove_action_group(group)
+        ui_manager.ensure_update()
 
 
 def attach_tab(window,tab):
+    if not check_env():
+        print "Not Found Beagle"
+        return
     sig = tab.connect("notify::load-status",_load_status_cb,window)
     tab._python_load_status_sig = sig
 
