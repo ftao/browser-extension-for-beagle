@@ -86,12 +86,14 @@ def save(fullpath,config):
 #default config value
 _ConfigDefault = {
     'auto_index':True,
+    'prompt_keyword':False,
     'index_https':False,
     'default_index':True,
     'white_list_first':True,
     'white_list':[],
     'black_list':[],
 }
+
 
 #load config
 config = load(config_file_path,_ConfigDefault)
@@ -109,21 +111,26 @@ _ui_str = """
   <menu name="ToolsMenu" action="Tools">
    <separator/>
    <menu name="BeagleMenu" action="BeagleMenuAction">
-       <menuitem name="PyBeagleExtIndexThisPage"
-             action="PyBeagleExtIndexThisPageAction"/>
-       <menuitem name="PyBeagleExtAuto"
-             action="PyBeagleExtAutoAction"/>
+     <menuitem name="PyBeagleExtAuto"
+          action="PyBeagleExtAutoAction"/>
+     <menuitem name="PyBeagleExtPromptKeyword"
+          action="PyBeagleExtPromptKeywordAction"/>
+     <menuitem name="PyBeagleExtIndexThisPage"
+          action="PyBeagleExtIndexThisPageAction"/>
+     <menuitem name="PyBeagleExtReloadConfig"
+          action="PyBeagleExtReloadConfigAction"/>
    </menu>
    <separator/>
   </menu>
  </menubar>
  <popup name="EphyDocumentPopup" action="PopupAction">
-    <menuitem name="PyBeagleExtIndexThisPagePopup"
-      action="PyBeagleExtIndexThisPageAction"/>
+   <menuitem action="PyBeagleExtAutoAction"/>
+   <menuitem action="PyBeagleExtIndexThisPageAction"/>
  </popup>
  <popup name="EphyLinkPopup" action="PopupAction">
-  <separator />
-  <menuitem name="IndexLink" 
+   <menuitem action="PyBeagleExtAutoAction"/>
+   <menuitem action="PyBeagleExtIndexThisPageAction"/>
+   <menuitem name="IndexLink" 
     action="PyBeagleExtIndexLinkAction"/>
  </popup>
 </ui>
@@ -152,11 +159,14 @@ def _index_this_page_cb(action, window):
 
 def _toggle_auto_cb(action,window):
     print "toggle auto index"
-    action = window.get_ui_manager().get_action('/menubar/ToolsMenu/BeagleMenu/PyBeagleExtAuto')
-    print action.get_active()
     if config.auto_index != action.get_active():
         config.auto_index = action.get_active()
         save(config_file_path, config)
+
+def _toggle_prompt_keywords_cb(action,window):
+    print "toggle prompt keyword"
+    if config.prompt_keyword != action.get_active():
+        config.prompt_keyword = action.get_active()
 
 def _index_link_cb(action,window):
     print "_index_link_cb"
@@ -191,6 +201,11 @@ def _load_status_cb(tab,event,window):
         index_embed(embed)
         set_status_label(window,"beagle will index %s " % url)
 
+def _reload_config_cb(action,window):
+    config = load(config_file_path,_ConfigDefault)
+    init_ui(window)
+
+
 # This is to pass to gtk.ActionGroup.add_actions()
 _actions = [
         ('BeagleMenuAction',None,'Beagle',None,None,None),
@@ -198,10 +213,14 @@ _actions = [
 	     _('Index This Page'), None, None, _index_this_page_cb),
 	    ('PyBeagleExtIndexLinkAction',None,
          _('Index Link'), None, None, _index_link_cb),
+	    ('PyBeagleExtReloadConfigAction',None,
+         _('Reload Config File'), None, None, _reload_config_cb),
 	   ]
 _toggle_actions = [
         ("PyBeagleExtAutoAction",None,
-         _("Auto Index"),None,None,_toggle_auto_cb)
+         _("Auto Index"),None,None,_toggle_auto_cb),
+        ("PyBeagleExtPromptKeywordAction",None,
+         _("Prompt key words when index on demand"),None,None,_toggle_prompt_keywords_cb),
 ]
 
 def set_status_label(window,msg):
@@ -210,6 +229,32 @@ def set_status_label(window,msg):
     statusbar.pop(context_id)
     statusbar.push(context_id,msg)
 
+def init_ui(window):
+    auto_index_action = window.get_ui_manager().get_action('/menubar/ToolsMenu/BeagleMenu/PyBeagleExtAuto')
+    auto_index_action.set_active(config.auto_index)
+    prompt_keyword_action = window.get_ui_manager().get_action('/menubar/ToolsMenu/BeagleMenu/PyBeagleExtPromptKeyword')
+    prompt_keyword_action.set_active(config.auto_index)
+
+def prompt_for_keyword():
+    dialog = gtk.Dialog("My dialog",None,
+          gtk.DIALOG_MODAL,
+          (gtk.STOCK_CANCEL, gtk.RESPONSE_REJECT, gtk.STOCK_OK, gtk.RESPONSE_ACCEPT)
+          )
+    dialog.set_default_response(gtk.RESPONSE_ACCEPT)
+    label = gtk.Label(_("Extra keywords to index"))
+    entry = gtk.Entry()
+    dialog.vbox.pack_start(label)
+    dialog.vbox.pack_start(entry)
+    label.show()
+    entry.show()
+    response = dialog.run()
+    if response == gtk.RESPONSE_ACCEPT:
+        ret = entry.get_text()
+    else:
+        ret = ""
+    print "extra keyword %s" % ret
+    dialog.destroy()
+    return ret
 
 def should_index(url):
     url = url.lower()
@@ -229,21 +274,33 @@ def should_index(url):
         return config.white_list_first
     return in_whitelist
 
-def index_embed(embed):
+def index_embed(embed,ondemand=True):
     url = embed.get_location(True)
     print "beagle index embed " + url
     md5_hash = md5.new(url).hexdigest() 
     beagle_content_path = beagle_data_path + "epiphany-" + md5_hash 
     beagle_meta_path = beagle_data_path + ".epiphany-" + md5_hash
     write_content(embed,beagle_content_path)
-    write_raw_meta(get_metas_from_embed(embed),beagle_meta_path)
+    extra_meta = []
+    if ondemand and config.prompt_keyword:
+        keywords = prompt_for_keyword()
+        print keywords
+        if keywords != "":
+            extra_meta.append("t:dc:keyword:%s" % keywords)
+    write_raw_meta(get_metas_from_embed(embed) + extra_meta,beagle_meta_path)
 
-def index_link(url):
+def index_link(url,ondemand=True):
     md5_hash = md5.new(url).hexdigest() 
     beagle_content_path = beagle_data_path + "epiphany-" + md5_hash 
     beagle_meta_path = beagle_data_path + ".epiphany-" + md5_hash
     write_file(url,beagle_content_path)
-    write_raw_meta(get_metas_from_url(url),beagle_meta_path)
+    extra_meta = []
+    if ondemand and config.prompt_keyword:
+        keywords = prompt_for_keyword()
+        print keywords
+        if keywords != "":
+            extra_meta.append("t:dc:keyword:%s" % keywords)
+    write_raw_meta(get_metas_from_url(url) + extra_meta,beagle_meta_path)
 
 def write_file(url,path):
     print "write file %s to %s " %(url,path)
@@ -310,9 +367,7 @@ def attach_window(window):
     notebook = window.get_notebook()
     sig = notebook.connect('switch_page', _switch_page_cb, window)
     notebook._py_beagle_sig = sig
-    
-    auto_index_action = window.get_ui_manager().get_action('/menubar/ToolsMenu/BeagleMenu/PyBeagleExtAuto')
-    auto_index_action.set_active(config.auto_index)
+    init_ui(window)    
 
 def detach_window(window):
     notebook = window.get_notebook()
