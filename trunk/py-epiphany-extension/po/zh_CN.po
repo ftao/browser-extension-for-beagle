@@ -16,22 +16,26 @@ msgstr ""
 "Generated-By: pygettext.py 1.5\n"
 
 
-#: beagleIndexer.py:153
+#: beagleIndexer.py:154
 msgid "beagle is indexing %s"
 msgstr "beagle 正在索引 %s"
 
-#: beagleIndexer.py:170
+#: beagleIndexer.py:171
 msgid "beagle is indexing link %s"
 msgstr "beagle 正在索引链接 %s"
 
-#: beagleIndexer.py:200
+#: beagleIndexer.py:206
 msgid "Index This Page"
 msgstr "索引当前页面"
 
-#: beagleIndexer.py:194
+#: beagleIndexer.py:208
 msgid "Index Link"
 msgstr "索引链接"
 
-#: beagleIndexer.py:198
+#: beagleIndexer.py:210
+msgid "Reload Config File"
+msgstr "重新加载配置文件"
+
+#: beagleIndexer.py:214
 msgid "Auto Index"
 msgstr "自动索引"
