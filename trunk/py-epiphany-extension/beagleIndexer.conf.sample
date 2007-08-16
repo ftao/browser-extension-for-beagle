@@ -5,6 +5,9 @@
 #click the menu item
 auto_index = True
 
+#prompt for keyword when on-demand index
+prompt_keyword = False
+
 #default action is index ?(True or False)
 default_index=True
 

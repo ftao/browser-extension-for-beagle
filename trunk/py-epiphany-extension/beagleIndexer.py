@@ -59,7 +59,6 @@ def load(fullpath, default={}):
 
 def save(fullpath,config):
     '''Save a Config Object to a config file'''
-    print "save config to file "
     try:
         outfile = open(fullpath,'w')
     except IOError:
@@ -254,7 +253,6 @@ def prompt_for_keyword():
         ret = entry.get_text()
     else:
         ret = ""
-    print "extra keyword %s" % ret
     dialog.destroy()
     return ret
 
@@ -309,7 +307,6 @@ def index_link(url, ondemand=True):
 
 def write_file(url,path):
     '''save file from url to path'''
-    print "write file %s to %s " %(url,path)
     persist = epiphany.ephy_embed_factory_new_object("EphyEmbedPersist")
     persist.set_flags(epiphany.EMBED_PERSIST_NO_VIEW)
     persist.set_source(url)
