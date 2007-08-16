@@ -5,16 +5,20 @@
 
   <Description about="urn:mozilla:install-manifest">
 
+    <!--
+    using old extension's em:id
     <em:id>firefox-extension@beagle.org</em:id>
+    -->
+    <em:id>{fda00e13-8c62-4f63-9d19-d168115b11ca}</em:id>
     <em:name>Beagle Indexer(new)</em:name>
-    <em:version>0.1</em:version>
+    <em:version>1.0</em:version>
     <em:description>
       Index webpages you visit using Beagle.
     </em:description>
     <em:creator>Tao Fei (Filia.Tao@gmail.com) </em:creator>
     <em:contributor>Alex Graveley  (Original Code)</em:contributor>
     <em:contributor>Abby Coffin (Icon Design)</em:contributor>
-    <em:homepageURL>http://beagle-project.org</em:homepageURL>
+    <em:homepageURL>http://beagle-project.org/Browser_Extension#Firefox_Extension</em:homepageURL>
     <em:iconURL>chrome://newbeagle/skin/beagle-big.png</em:iconURL>
     <em:optionsURL>chrome://newbeagle/content/beaglePrefs.xul</em:optionsURL>
 

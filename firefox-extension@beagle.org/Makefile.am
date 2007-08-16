@@ -1,7 +1,6 @@
 
 PROJECT = firefox-extension@beagle.org
-CHROME = beagle
-VERSION = 0.1
+VERSION = 1.0
 
 all: $(PROJECT)-$(VERSION).xpi
 
@@ -17,6 +16,7 @@ XPI_FILES = 			\
 	chrome/content/beagleAddFilter.js	\
 	chrome/content/indexLink.xul	\
 	chrome/content/indexLink.js	\
+	chrome/content/indexBookmark.js	\
 	chrome/content/md5.js			\
 	chrome/content/utils.js	\
 	chrome/content/i18n.js	\
@@ -35,7 +35,11 @@ XPI_FILES = 			\
 	chrome/locale/en-US/beagle.dtd		\
 	chrome/locale/en-US/beagle.properties	\
 	\
-	chrome/skin/classic//contents.rdf	\
+	chrome/locale/zh-CN/contents.rdf	\
+	chrome/locale/zh-CN/beagle.dtd		\
+	chrome/locale/zh-CN/beagle.properties	\
+	\
+	chrome/skin/classic/contents.rdf	\
 	chrome/skin/classic/beagle-big.png	\
 	chrome/skin/classic/beagle-disabled.png\
 	chrome/skin/classic/beagle-error.png	\
@@ -47,5 +51,4 @@ $(PROJECT)-$(VERSION).xpi: $(XPI_FILES)
 	zip -q9 $@ $^
 
 CLEANFILES =			\
-	chrome/$(CHROME).jar	\
 	$(PROJECT)-$(VERSION).xpi
