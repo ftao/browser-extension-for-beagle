@@ -9,8 +9,8 @@
     using old extension's em:id
     <em:id>firefox-extension@beagle.org</em:id>
     -->
-    <em:name>Beagle Indexer(new)</em:name>
     <em:id>{fda00e13-8c62-4f63-9d19-d168115b11ca}</em:id>
+    <em:name>Beagle Indexer(new)</em:name>
     <em:version>1.0.1</em:version>
     <em:description>
       Index webpages you visit using Beagle.
