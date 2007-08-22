@@ -258,7 +258,7 @@ var beagle = {
         var flags = [false,false];
         for(var j = 0; j < 2; j++)
         {
-            var list = prefObject[lists[j]].parseJSON();
+            var list = parseJSON(prefObject[lists[j]]);
             var len = list.length;
             var flag = false;
             for(var i = 0; i < len && !flag; i++)
@@ -602,7 +602,7 @@ var beagle = {
     {
         window.openDialog('chrome://newbeagle/content/beaglePrefs.xul',
                 'PrefWindow',
-                'chrome,modal=yes,resizable=no',
+                'chrome,resizable=no',
                 'browser');
     },
 

@@ -84,7 +84,7 @@ var beaglePref = {
      */
     load : function()
     {
-        //log(this.prefKeys.toJSONString());
+        log(toJSONString(this.prefKeys));
         
         for(key in this.prefKeys)
         {
@@ -108,7 +108,7 @@ var beaglePref = {
         {
             this.set(key, this.prefObject[key]);
         }
-        //log("Save Beagle Prefs:" + this.prefObject.toJSONString() );
+        log("Save Beagle Prefs:" + toJSONString(this.prefObject) );
     },
 
     /**
@@ -166,7 +166,7 @@ var beaglePref = {
         {
             var elementID = listElements[i];
             try{
-                var items = this.prefObject[elementID].parseJSON(); 
+                var items = parseJSON(this.prefObject[elementID]); 
                 var listbox = document.getElementById(elementID) ;
                 //log("listbox.getRowCount:" + listbox.getRowCount() + '\n');
                 var num = listbox.getRowCount();
@@ -234,7 +234,7 @@ var beaglePref = {
                     var patternType = listitem.getElementsByTagName('listcell')[2].getAttribute('value');
                     items.push({'name':name,'pattern':pattern,'patternType':patternType});
                 }
-                var value = items.toJSONString();
+                var value = toJSONString(items);
                 prefs[elementID] = value;
             } catch(e) {
                 // We don't seem to care about this.
@@ -253,7 +253,7 @@ var beaglePref = {
         window.openDialog(
             'chrome://newbeagle/content/beagleAddFilter.xul',
             "add_filter_dialog", 
-            'chrome, modal',
+            'chrome,modal',
             type
         );
     },
@@ -293,9 +293,9 @@ var beaglePref = {
             //error
             return;
         }
-        var rules = this.get(key).parseJSON();
+        var rules = parseJSON(this.get(key));
         rules.push({"name":name,"pattern":pattern,"patternType":type});
-        this.set(key,rules.toJSONString());
+        this.set(key,toJSONString(rules));
     },
 
     /**
@@ -307,13 +307,13 @@ var beaglePref = {
             this.set("beagle.autoindex.active",gPrefService.getBoolPref("beagle.enabled"));
             this.set("beagle.security.active",gPrefService.getBoolPref("beagle.security.active"));
             var filters = gPrefService.getCharPref("beagle.security.filters").split(";");
-            var excludeList = this.get("beagle.exclude.list").parseJSON();
+            var excludeList = parseJSON(this.get("beagle.exclude.list"));
             for(var i = 0; i < filters.length; i++)
             {
                 if(filters[i] != "")         
                     excludeList.push({"name":"Import_"+i,"pattern":filters[i],"patternType":"domain"});
             }
-            this.set("beagle.exclude.list",excludeList.toJSONString());
+            this.set("beagle.exclude.list",toJSONString(excludeList));
         }
         catch(ex){
             log("first run import error");
