@@ -135,7 +135,7 @@ beagleInvisibleBrowser = {
 	doIndex : function()
 	{
         this.STOP_BUTTON.disabled=true;
-		this.STATUS_ELEMENT.value = _f("beagle_index_link_saving",[this.currentURL]);
+		this.STATUS_ELEMENT.value = _f("beagle_index_link_saving",[this.getCurrentURL()]);
         window.opener.beagle.onLinkLoad(
             this.getCurrentURL(),
             this.currentContentType,
@@ -168,7 +168,7 @@ beagleInvisibleBrowser = {
 		if ( !this.isDocument && aStateFlags & Components.interfaces.nsIWebProgressListener.STATE_STOP )
         {
             this.STATUS_ELEMENT.value = _f("beagle_index_link_saving",[this.currentURL]);
-            window.opener.beagle.onLinkLoad(this.currentURL,this.currentContentType,null);
+            window.opener.beagle.onLinkLoad(this.currentURL,this.currentContentType,null,window.arguments[0]);
             window.close();
         }
 	},

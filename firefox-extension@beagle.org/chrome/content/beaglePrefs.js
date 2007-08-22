@@ -84,7 +84,7 @@ var beaglePref = {
      */
     load : function()
     {
-        log(toJSONString(this.prefKeys));
+        //log(toJSONString(this.prefKeys));
         
         for(key in this.prefKeys)
         {
