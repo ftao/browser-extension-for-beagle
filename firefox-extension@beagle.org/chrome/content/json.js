@@ -55,15 +55,23 @@
 
 /*jslint evil: true */
 
-// Augment the basic prototypes if they have not already been augmented.
+/**
+rewirite by taofei 2007-8-22
+to avoid for-in loop problem.
+toJSONString(anything)
+parseJSON(anything)
+*/
 
-if (!Object.prototype.toJSONString) {
 
-    Array.prototype.toJSONString = function () {
+
+//help function xxxToJSONString
+
+
+    function arrayToJSON (arrayVal) {
         var a = ['['],  // The array holding the text fragments.
             b,          // A boolean indicating that a comma is required.
             i,          // Loop counter.
-            l = this.length,
+            l = arrayVal.length,
             v;          // The value to be stringified.
 
         function p(s) {
@@ -78,36 +86,11 @@ if (!Object.prototype.toJSONString) {
             b = true;
         }
 
-// For each value in this array...
+// For each value in arrayVal array...
 
         for (i = 0; i < l; i += 1) {
-            v = this[i];
-            switch (typeof v) {
-
-// Serialize a JavaScript object value. Ignore objects thats lack the
-// toJSONString method. Due to a specification error in ECMAScript,
-// typeof null is 'object', so watch out for that case.
-
-            case 'object':
-                if (v) {
-                    if (typeof v.toJSONString === 'function') {
-                        p(v.toJSONString());
-                    }
-                } else {
-                    p("null");
-                }
-                break;
-
-// Otherwise, serialize the value.
-
-            case 'string':
-            case 'number':
-            case 'boolean':
-                p(v.toJSONString());
-
-// Values without a JSON representation are ignored.
-
-            }
+            v = arrayVal[i];
+            p(toJSONString(v));
         }
 
 // Join all of the fragments together and return.
@@ -117,40 +100,9 @@ if (!Object.prototype.toJSONString) {
     };
 
 
-    Boolean.prototype.toJSONString = function () {
-        return String(this);
-    };
 
 
-    Date.prototype.toJSONString = function () {
-
-// Ultimately, this method will be equivalent to the date.toISOString method.
-
-        function f(n) {
-
-// Format integers to have at least two digits.
-
-            return n < 10 ? '0' + n : n;
-        }
-
-        return '"' + this.getFullYear() + '-' +
-                f(this.getMonth() + 1) + '-' +
-                f(this.getDate()) + 'T' +
-                f(this.getHours()) + ':' +
-                f(this.getMinutes()) + ':' +
-                f(this.getSeconds()) + '"';
-    };
-
-
-    Number.prototype.toJSONString = function () {
-
-// JSON numbers must be finite. Encode non-finite numbers as null.
-
-        return isFinite(this) ? String(this) : "null";
-    };
-
-
-    Object.prototype.toJSONString = function () {
+    function objectToJSON(objectVal) {
         var a = ['{'],  // The array holding the text fragments.
             b,          // A boolean indicating that a comma is required.
             k,          // The current key.
@@ -164,39 +116,16 @@ if (!Object.prototype.toJSONString) {
             if (b) {
                 a.push(',');
             }
-            a.push(k.toJSONString(), ':', s);
+            a.push(toJSONString(k), ':', s);
             b = true;
         }
 
 // Iterate through all of the keys in the object, ignoring the proto chain.
 
-        for (k in this) {
-            if (this.hasOwnProperty(k)) {
-                v = this[k];
-                switch (typeof v) {
-
-// Serialize a JavaScript object value. Ignore objects that lack the
-// toJSONString method. Due to a specification error in ECMAScript,
-// typeof null is 'object', so watch out for that case.
-
-                case 'object':
-                    if (v) {
-                        if (typeof v.toJSONString === 'function') {
-                            p(v.toJSONString());
-                        }
-                    } else {
-                        p("null");
-                    }
-                    break;
-
-                case 'string':
-                case 'number':
-                case 'boolean':
-                    p(v.toJSONString());
-
-// Values without a JSON representation are ignored.
-
-                }
+        for (k in objectVal) {
+            if (objectVal.hasOwnProperty(k)) {
+                v = objectVal[k];
+                p(toJSONString(v));
             }
         }
 
@@ -206,15 +135,9 @@ if (!Object.prototype.toJSONString) {
         return a.join('');
     };
 
-
-    (function (s) {
-
-// Augment String.prototype. We do this in an immediate anonymous function to
-// avoid defining global variables.
-
-// m is a table of character substitutions.
-
-        var m = {
+function strToJSON(str)
+{
+         var m = {
             '\b': '\\b',
             '\t': '\\t',
             '\n': '\\n',
@@ -224,21 +147,106 @@ if (!Object.prototype.toJSONString) {
             '\\': '\\\\'
         };
 
+   // If the string contains no control characters, no quote characters, and no
+    // backslash characters, then we can simply slap some quotes around it.
+    // Otherwise we must also replace the offending characters with safe
+    // sequences.
 
-        s.parseJSON = function (filter) {
-            var j;
-
-            function walk(k, v) {
-                var i;
-                if (v && typeof v === 'object') {
-                    for (i in v) {
-                        if (v.hasOwnProperty(i)) {
-                            v[i] = walk(i, v[i]);
-                        }
-                    }
-                }
-                return filter(k, v);
+    if (/["\\\x00-\x1f]/.test(str)) {
+        return '"' + str.replace(/([\x00-\x1f\\"])/g, function (a, b) {
+            var c = m[b];
+            if (c) {
+                return c;
             }
+            c = b.charCodeAt();
+            return '\\u00' +
+                Math.floor(c / 16).toString(16) +
+                (c % 16).toString(16);
+        }) + '"';
+    }
+    return '"' + str + '"';
+}
+
+function boolToJSON(bool)
+{
+    return String(bool);
+}
+
+function dateToJSON(dateVal)
+{
+
+// Ultimately, this method will be equivalent to the date.toISOString method.
+
+        function f(n) {
+
+// Format integers to have at least two digits.
+
+            return n < 10 ? '0' + n : n;
+        }
+
+        return '"' + dataVal.getFullYear() + '-' +
+                f(dataVal.getMonth() + 1) + '-' +
+                f(dataVal.getDate()) + 'T' +
+                f(dataVal.getHours()) + ':' +
+                f(dataVal.getMinutes()) + ':' +
+                f(dataVal.getSeconds()) + '"';
+};
+
+function numberToJSON(numberVal) 
+{
+
+// JSON numbers must be finite. Encode non-finite numbers as null.
+
+        return isFinite(numberVal) ? String(numberVal) : "null";
+};
+
+function toJSONString(anything)
+{
+     switch (typeof anything) {
+
+// Serialize a JavaScript object value. Ignore objects thats lack the
+// toJSONString method. Due to a specification error in ECMAScript,
+// typeof null is 'object', so watch out for that case.
+    case 'array':
+        return arrayToJSON(anything);
+    case 'object':
+        if (anything) {
+            if (anything instanceof Array)
+                return arrayToJSON(anything);
+            else
+                return objectToJSON(anything);
+        } else {
+            return "null";
+        }
+        break;
+
+    case 'string':
+        return strToJSON(anything);
+    case 'number':
+        return numberToJSON(anything);
+    case 'boolean':
+        return boolToJSON(anything);
+    default:
+        return String(anything);
+    }
+}
+
+
+
+function parseJSON(str,filter) {
+    var j;
+
+    function walk(k, v) {
+        var i;
+        if (v && typeof v === 'object') {
+            for (i in v) {
+                if (v.hasOwnProperty(i)) {
+                    v[i] = walk(i, v[i]);
+                }
+            }
+        }
+        return filter(k, v);
+    }
 
 
 // Parsing happens in three stages. In the first stage, we run the text against
@@ -247,53 +255,33 @@ if (!Object.prototype.toJSONString) {
 // because it can cause mutation. But just to be safe, we will reject all
 // unexpected characters.
 
-            if (/^("(\\.|[^"\\\n\r])*?"|[,:{}\[\]0-9.\-+Eaeflnr-u \n\r\t])+?$/.
-                    test(this)) {
+    if (/^("(\\.|[^"\\\n\r])*?"|[,:{}\[\]0-9.\-+Eaeflnr-u \n\r\t])+?$/.
+            test(str)) {
 
 // In the second stage we use the eval function to compile the text into a
 // JavaScript structure. The '{' operator is subject to a syntactic ambiguity
 // in JavaScript: it can begin a block or an object literal. We wrap the text
 // in parens to eliminate the ambiguity.
 
-                try {
-                    j = eval('(' + this + ')');
-                } catch (e) {
-                    throw new SyntaxError("parseJSON");
-                }
-            } else {
-                throw new SyntaxError("parseJSON");
-            }
+        try {
+            j = eval('(' + str + ')');
+        } catch (e) {
+            throw new SyntaxError("parseJSON");
+        }
+    } else {
+        throw new SyntaxError("parseJSON");
+    }
 
 // In the optional third stage, we recursively walk the new structure, passing
 // each name/value pair to a filter function for possible transformation.
 
-            if (typeof filter === 'function') {
-                j = walk('', j);
-            }
-            return j;
-        };
+    if (typeof filter === 'function') {
+        j = walk('', j);
+    }
+    dump(toJSONString(j));
+    return j;
+};
 
 
-        s.toJSONString = function () {
 
-// If the string contains no control characters, no quote characters, and no
-// backslash characters, then we can simply slap some quotes around it.
-// Otherwise we must also replace the offending characters with safe
-// sequences.
 
-            if (/["\\\x00-\x1f]/.test(this)) {
-                return '"' + this.replace(/([\x00-\x1f\\"])/g, function (a, b) {
-                    var c = m[b];
-                    if (c) {
-                        return c;
-                    }
-                    c = b.charCodeAt();
-                    return '\\u00' +
-                        Math.floor(c / 16).toString(16) +
-                        (c % 16).toString(16);
-                }) + '"';
-            }
-            return '"' + this + '"';
-        };
-    })(String.prototype);
-}
