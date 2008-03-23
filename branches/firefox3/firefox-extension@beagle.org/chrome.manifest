@@ -1,0 +1,7 @@
+content newbeagle  chrome/content/
+locale newbeagle en-US chrome/locale/en-US/
+locale newbeagle zh-CN chrome/locale/zh-CN/
+skin   newbeagle classic/1.0 chrome/skin/classic/
+overlay chrome://browser/content/browser.xul chrome://newbeagle/content/beagleOverlay.xul
+overlay chrome://navigator/content/navigator.xul chrome://newbeagle/content/beagleOverlay.xul
+
